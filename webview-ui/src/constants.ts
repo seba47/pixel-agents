@@ -877,3 +877,70 @@ export const MUSIC_VERSION_GAP_PX = 6;
 export const VERSION_LABEL_BOTTOM_PX = 10;
 /** The update notice / changelog tooltip, this far above the label's spot. */
 export const VERSION_NOTICE_ABOVE_PX = 34;
+
+// ── Holo mode (futuristic office skin, Settings → Holo Mode) ─────────────────
+
+/** localStorage key for Holo Mode and its ambience (per browser). */
+export const HOLO_STORAGE_KEY = 'pixel-agents.holo';
+/** Auto ambience: local hours [start, end) that count as day. */
+export const HOLO_DAY_START_HOUR = 7;
+export const HOLO_DAY_END_HOUR = 19;
+
+/** The colour ramps the office's floors, walls and furniture are graded onto,
+ *  darkest first: a pixel's luminance picks its step. Characters and pets keep
+ *  their own colours, so the agents pop out of the room. */
+export const HOLO_NIGHT_RAMP = [
+  '#070b1c',
+  '#0f1835',
+  '#18284f',
+  '#22406e',
+  '#2f6c96',
+  '#45b3c9',
+  '#9ef3ff',
+];
+export const HOLO_DAY_RAMP = [
+  '#1b2540',
+  '#34446a',
+  '#53668f',
+  '#7c91b4',
+  '#a9bdd6',
+  '#d4e4f0',
+  '#f4fbff',
+];
+
+/** The neon floor grid: one sprite pixel wide, every tile edge. */
+export const HOLO_GRID_COLOR_NIGHT = 'rgba(80, 230, 255, 0.16)';
+export const HOLO_GRID_COLOR_DAY = 'rgba(30, 60, 120, 0.12)';
+/** Night: the room under a dark wash, lit by pools around agents. */
+export const HOLO_NIGHT_WASH = 'rgba(4, 6, 20, 0.45)';
+/** A light pool's radius (sprite px) and its strength at the centre. */
+export const HOLO_LIGHT_RADIUS_PX = 34;
+export const HOLO_LIGHT_ALPHA = 0.7;
+/** Light pool colours by agent state. */
+export const HOLO_LIGHT_ACTIVE = '#3de8ff';
+export const HOLO_LIGHT_PERMISSION = '#ffb020';
+export const HOLO_LIGHT_WAITING = '#7dff9a';
+export const HOLO_LIGHT_IDLE = '#b45cff';
+/** Steps a light pool is quantized to, so its edge reads as pixel art. */
+export const HOLO_LIGHT_STEPS = 5;
+
+/** The network orb: canvas size in orb pixels, drawn at this many CSS px each. */
+export const HOLO_ORB_SIZE_PX = 72;
+export const HOLO_ORB_PIXEL_SCALE = 3;
+/** One full turn of the globe, in seconds. */
+export const HOLO_ORB_TURN_SEC = 24;
+/** The orb's tilt toward the viewer (radians). */
+export const HOLO_ORB_TILT = 0.42;
+/** Globe wireframe: meridians and parallels. */
+export const HOLO_ORB_MERIDIANS = 8;
+export const HOLO_ORB_PARALLELS = 5;
+export const HOLO_ORB_WIRE_FRONT = '#22406e';
+export const HOLO_ORB_WIRE_BACK = '#111a38';
+export const HOLO_ORB_RIM = '#9ef3ff';
+export const HOLO_ORB_CORE = '#070b1c';
+export const HOLO_ORB_LINK = '#ff4fd8';
+export const HOLO_ORB_SATELLITE = '#e8f6ff';
+/** Hit radius around a node, in orb pixels. */
+export const HOLO_ORB_HIT_RADIUS = 5;
+/** Satellites (sub-agents) orbit this far outside their agent's node. */
+export const HOLO_ORB_SATELLITE_ORBIT = 5;

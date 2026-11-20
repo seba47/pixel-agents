@@ -43,6 +43,10 @@ import {
   VOID_TILE_DASH_PATTERN,
   VOID_TILE_OUTLINE_COLOR,
 } from '../../constants.js';
+import { renderHoloGrid, renderHoloLighting } from '../../holo/holoCanvas.js';
+import { holoFillColor, holoSprite } from '../../holo/holoGrade.js';
+import type { ResolvedAmbience } from '../../holo/holoMode.js';
+import { holoRenderState } from '../../holo/holoMode.js';
 import type { SelectionButton } from '../editor/editorState.js';
 import { getColorizedFloorSprite, hasFloorSprites, WALL_COLOR } from '../floorTiles.js';
 import { mapOffset } from '../projection.js';
@@ -96,6 +100,17 @@ export function setGhostHeadlessAgents(enabled: boolean): void {
 
 export function isGhostHeadlessAgentsEnabled(): boolean {
   return ghostHeadlessAgents;
+}
+
+/**
+ * Holo Mode for the frame being drawn (null = off). Set once at the top of
+ * renderFrame, so every pass of one frame agrees on it.
+ */
+let frameHolo: { ambience: ResolvedAmbience } | null = null;
+
+/** A room sprite (floor, wall, carpet, furniture) as this frame shows it. */
+function roomSprite(sprite: SpriteData): SpriteData {
+  return frameHolo ? holoSprite(sprite, frameHolo.ambience) : sprite;
 }
 
 // ── Render functions ────────────────────────────────────────────
@@ -179,7 +194,7 @@ export function renderCarpetLayer(
           paletteKey,
         );
         if (!sprite) continue;
-        const cached = getCachedSprite(sprite, zoom);
+        const cached = getCachedSprite(roomSprite(sprite), zoom);
         ctx.drawImage(cached, offsetX + jx * s - halfS, offsetY + jy * s - halfS);
       }
     }
@@ -331,6 +346,7 @@ export function renderTileGrid(
         } else {
           ctx.fillStyle = FALLBACK_FLOOR_COLOR;
         }
+        if (frameHolo) ctx.fillStyle = holoFillColor(frameHolo.ambience);
         ctx.fillRect(offsetX + c * s, offsetY + r * s, s, s);
         continue;
       }
@@ -339,7 +355,7 @@ export function renderTileGrid(
       const colorIdx = r * layoutCols + c;
       const color = tileColors?.[colorIdx] ?? { h: 0, s: 0, b: 0, c: 0 };
       const sprite = getColorizedFloorSprite(tile, color);
-      const cached = getCachedSprite(sprite, zoom);
+      const cached = getCachedSprite(roomSprite(sprite), zoom);
       ctx.drawImage(cached, offsetX + c * s, offsetY + r * s);
     }
   }
@@ -366,7 +382,7 @@ export function renderScene(
 
   // Furniture
   for (const f of furniture) {
-    const cached = getCachedSprite(f.sprite, zoom);
+    const cached = getCachedSprite(roomSprite(f.sprite), zoom);
     const fx = offsetX + f.x * zoom;
     const fy = offsetY + f.y * zoom;
     if (f.mirrored) {
@@ -863,6 +879,7 @@ export function renderFrame(
 ): { offsetX: number; offsetY: number } {
   // Clear
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  frameHolo = holoRenderState();
 
   // Use layout dimensions (fallback to tileMap size)
   const cols = layoutCols ?? (tileMap.length > 0 ? tileMap[0].length : 0);
@@ -878,6 +895,26 @@ export function renderFrame(
   // Carpet layer (above floor, below seat indicators / furniture / characters)
   if (carpetTiles && carpetTiles.length > 0) {
     renderCarpetLayer(ctx, carpetTiles, cols, rows, offsetX, offsetY, zoom);
+  }
+
+  // Holo Mode's neon floor grid — above carpets, below everything standing
+  if (frameHolo) {
+    renderHoloGrid(ctx, tileMap, offsetX, offsetY, zoom, frameHolo.ambience);
+  }
+
+  // Holo Mode at night: the floor darkened, lit around each agent (under the
+  // scene, so furniture stands in the light and characters keep their colours)
+  if (frameHolo) {
+    renderHoloLighting(
+      ctx,
+      characters,
+      offsetX,
+      offsetY,
+      zoom,
+      cols * TILE_SIZE,
+      rows * TILE_SIZE,
+      frameHolo.ambience,
+    );
   }
 
   // Area overlay (translucent color wash) — above carpets, below seat indicators

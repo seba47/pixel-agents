@@ -19,11 +19,18 @@ import { Tooltip } from './components/Tooltip.js';
 import { Modal } from './components/ui/Modal.js';
 import { VersionIndicator } from './components/VersionIndicator.js';
 import { MobileZoomLevel, ZoomControls } from './components/ZoomControls.js';
-import { CONVERSATION_SIDEBAR_WIDTH_PX, OFFICE_CANVAS_TEST_ID } from './constants.js';
+import {
+  AGENT_CARD_WIDTH_PX,
+  CONVERSATION_SIDEBAR_WIDTH_PX,
+  OFFICE_CANVAS_TEST_ID,
+} from './constants.js';
 import type { ConversationSearchScope } from './conversations/ConversationList.js';
 import { ConversationSearch } from './conversations/ConversationSearch.js';
 import { ConversationSidebar } from './conversations/ConversationSidebar.js';
 import { useConversationSidebar } from './conversations/useConversationSidebar.js';
+import { AmbienceSwitch } from './holo/AmbienceSwitch.js';
+import { HoloOrb } from './holo/HoloOrb.js';
+import { useHoloMode, useHoloThemeAttribute } from './holo/useHoloMode.js';
 import { useDirectoryEditor } from './hooks/useDirectoryEditor.js';
 import { useEditorActions } from './hooks/useEditorActions.js';
 import { useEditorKeyboard } from './hooks/useEditorKeyboard.js';
@@ -165,6 +172,8 @@ function App() {
   // full-screen pages with the cards in a bottom bar. Desktop keeps the
   // right-docked drawer.
   const isMobile = useIsMobile();
+  const holo = useHoloMode();
+  useHoloThemeAttribute();
   // Software keyboard: whether it is up (the key bar shows), and the height
   // to clamp the shell to so the terminal shrinks (and the PTY resizes)
   // instead of hiding its input line under the keys (iOS only — Android
@@ -582,6 +591,32 @@ function App() {
               providerName={usage.status.providerName}
               mobile={isMobile}
             />
+          )}
+
+          {/* Holo Mode: scanlines over the office, and top-right the network
+              orb with the ambience switch under it. */}
+          {holo.enabled && (
+            <>
+              <div className="absolute inset-0 pointer-events-none holo-scanlines" />
+              {!editor.isEditMode && (
+                <div
+                  className="absolute top-8 z-10 flex flex-col items-end gap-6 pointer-events-none"
+                  // Desktop: clear of the agent card column along the office's right edge.
+                  style={{
+                    right: !isMobile && cardAgents.length > 0 ? AGENT_CARD_WIDTH_PX + 16 : 8,
+                  }}
+                >
+                  {!isMobile && (
+                    <HoloOrb
+                      officeState={officeState}
+                      agents={agents}
+                      onSelectAgent={openAgentFromSidebar}
+                    />
+                  )}
+                  <AmbienceSwitch />
+                </div>
+              )}
+            </>
           )}
 
           {/* Vignette overlay */}

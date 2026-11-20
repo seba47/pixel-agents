@@ -244,4 +244,7 @@ export function dispatchMockMessages(): void {
   });
 
   console.log('[BrowserMock] Messages dispatched');
+
+  // A simulated crew, once the layout (and its seats) is in.
+  void import('./mockCrew.js').then(({ startMockCrew }) => window.setTimeout(startMockCrew, 500));
 }

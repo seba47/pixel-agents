@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 
+import { holoMode } from '../holo/holoMode.js';
+import { useHoloMode } from '../holo/useHoloMode.js';
 import { officeRadio } from '../music/musicEngine.js';
 import { useOfficeRadio } from '../music/useOfficeRadio.js';
 import { isSoundEnabled, setSoundEnabled } from '../notificationSound.js';
@@ -74,6 +76,7 @@ export function SettingsModal({
 }: SettingsModalProps) {
   // The office radio's player is a per-browser setting the radio keeps itself.
   const radio = useOfficeRadio();
+  const holo = useHoloMode();
   const [soundLocal, setSoundLocal] = useState(isSoundEnabled);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [assetDirDraft, setAssetDirDraft] = useState('');
@@ -208,6 +211,12 @@ export function SettingsModal({
           title="The office radio's player, bottom of the office"
           checked={!radio.hidden}
           onChange={() => officeRadio.setHidden(!radio.hidden)}
+        />
+        <Checkbox
+          label="Holo Mode"
+          title="A futuristic skin: neon room, mission tags, the agent network orb, day and night"
+          checked={holo.enabled}
+          onChange={() => holoMode.setEnabled(!holo.enabled)}
         />
         <Checkbox
           label="Watch All Sessions"

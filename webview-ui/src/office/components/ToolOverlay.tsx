@@ -18,6 +18,8 @@ import {
   TOOL_OVERLAY_GAP_PX,
   TOOL_OVERLAY_VERTICAL_OFFSET,
 } from '../../constants.js';
+import { HoloTag, type HoloTagStatus } from '../../holo/HoloTag.js';
+import { useHoloMode } from '../../holo/useHoloMode.js';
 import type { SubagentCharacter } from '../../hooks/useExtensionMessages.js';
 import { ContextBar } from '../ContextBar.js';
 import { contextLeft } from '../contextGauge.js';
@@ -112,6 +114,9 @@ export function ToolOverlay({
   onCloseAgent,
   alwaysShowOverlay,
 }: ToolOverlayProps) {
+  // Holo Mode swaps every label for a mission tag, always shown.
+  const holo = useHoloMode().enabled;
+  const showAll = alwaysShowOverlay || holo;
   const [, setTick] = useState(0);
   useEffect(() => {
     let rafId = 0;
@@ -197,7 +202,7 @@ export function ToolOverlay({
 
         // Only show the label for hovered or selected agents (unless
         // always-show is on) — the bubble renders regardless.
-        if (!alwaysShowOverlay && !isSelected && !isHovered) {
+        if (!showAll && !isSelected && !isHovered) {
           return bubbleNode && <Fragment key={id}>{bubbleNode}</Fragment>;
         }
 
@@ -289,6 +294,41 @@ export function ToolOverlay({
         // it fills (the colour still warns by the share used).
         const contextRatio = ch.contextTokens / ch.maxContextTokens;
         const showContextGauge = !isSub && ch.contextReported === true;
+        const contextGauge = showContextGauge ? (
+          <ContextBar
+            used={contextRatio}
+            width={CONTEXT_GAUGE_WIDTH_PX}
+            height={CONTEXT_GAUGE_HEIGHT_PX}
+            title={`${Math.round(contextLeft(contextRatio) * 100)}% context left (${(ch.contextTokens / 1000).toFixed(0)}k of ${(ch.maxContextTokens / 1000).toFixed(0)}k tokens used)`}
+            testId="context-gauge"
+            pct={Math.round(contextRatio * 100)}
+          />
+        ) : null;
+        const closeButton =
+          isSelected && !isSub ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCloseAgent(id);
+              }}
+              title="Close agent"
+              className="ml-2 shrink-0"
+            >
+              {/* The panel's padding favours the text (pb > pt) and the × fills
+                  rows 1–5 of its grid: 3px lower centres it on the label line. */}
+              <PixelIcon name="close" className="translate-y-3" />
+            </Button>
+          ) : null;
+        const holoStatus: HoloTagStatus =
+          hasPermission || ch.bubbleType === 'permission'
+            ? 'permission'
+            : hasWaiting
+              ? 'waiting'
+              : isActive
+                ? 'active'
+                : 'idle';
 
         return (
           <Fragment key={id}>
@@ -301,74 +341,69 @@ export function ToolOverlay({
                 left: screenX,
                 top: labelBottom,
                 pointerEvents: isSelected ? 'auto' : 'none',
-                opacity: alwaysShowOverlay && !isSelected && !isHovered ? 0.75 : 1,
+                opacity: showAll && !holo && !isSelected && !isHovered ? 0.75 : 1,
                 zIndex: isSelected ? OVERLAY_LABEL_SELECTED_Z_INDEX : OVERLAY_LABEL_Z_INDEX,
               }}
               data-testid="agent-overlay"
               data-agent-id={id}
             >
-              <div className="flex items-center border-border px-8 pt-2 pb-4 gap-5 pixel-panel whitespace-nowrap max-w-2xs">
-                {dotColor && (
-                  <span
-                    className={`w-6 h-6 rounded-full shrink-0 ${isActive && !hasPermission && !hasWaiting ? 'pixel-pulse' : ''}`}
-                    style={{ background: dotColor }}
-                  />
-                )}
-                <div className="flex flex-col gap-0 overflow-hidden">
-                  {teamRoleLabel && (
-                    <span
-                      className="overflow-hidden text-ellipsis block leading-none"
-                      style={{
-                        fontSize: '18px',
-                        color: ch.isTeamLead ? TEAM_LEAD_COLOR : TEAM_ROLE_COLOR,
-                        fontWeight: ch.isTeamLead ? 'bold' : undefined,
-                      }}
-                    >
-                      {teamRoleLabel}
-                    </span>
-                  )}
-                  <span
-                    className="overflow-hidden text-ellipsis block leading-none"
-                    style={{
-                      fontSize: isSub ? '20px' : '22px',
-                      fontStyle: isSub ? 'italic' : undefined,
-                    }}
-                  >
-                    {activityText}
-                  </span>
-                  {ch.directoryName && (
-                    <span className="text-2xs leading-none overflow-hidden text-ellipsis block">
-                      {ch.directoryName}
-                    </span>
-                  )}
-                </div>
-                {isSelected && !isSub && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCloseAgent(id);
-                    }}
-                    title="Close agent"
-                    className="ml-2 shrink-0"
-                  >
-                    {/* The panel's padding favours the text (pb > pt) and the × fills
-                        rows 1–5 of its grid: 3px lower centres it on the label line. */}
-                    <PixelIcon name="close" className="translate-y-3" />
-                  </Button>
-                )}
-              </div>
-              {showContextGauge && (
-                <ContextBar
-                  used={contextRatio}
-                  width={CONTEXT_GAUGE_WIDTH_PX}
-                  height={CONTEXT_GAUGE_HEIGHT_PX}
-                  style={{ marginTop: CONTEXT_GAUGE_GAP_PX }}
-                  title={`${Math.round(contextLeft(contextRatio) * 100)}% context left (${(ch.contextTokens / 1000).toFixed(0)}k of ${(ch.maxContextTokens / 1000).toFixed(0)}k tokens used)`}
-                  testId="context-gauge"
-                  pct={Math.round(contextRatio * 100)}
+              {holo ? (
+                <HoloTag
+                  activity={activityText}
+                  heading={teamRoleLabel ?? ch.directoryName ?? null}
+                  status={holoStatus}
+                  expanded={isSelected || isHovered}
+                  small={isSub}
+                  action={closeButton}
+                  extra={
+                    (isSelected || isHovered) && contextGauge ? (
+                      <div style={{ marginTop: CONTEXT_GAUGE_GAP_PX }}>{contextGauge}</div>
+                    ) : null
+                  }
                 />
+              ) : (
+                <>
+                  <div className="flex items-center border-border px-8 pt-2 pb-4 gap-5 pixel-panel whitespace-nowrap max-w-2xs">
+                    {dotColor && (
+                      <span
+                        className={`w-6 h-6 rounded-full shrink-0 ${isActive && !hasPermission && !hasWaiting ? 'pixel-pulse' : ''}`}
+                        style={{ background: dotColor }}
+                      />
+                    )}
+                    <div className="flex flex-col gap-0 overflow-hidden">
+                      {teamRoleLabel && (
+                        <span
+                          className="overflow-hidden text-ellipsis block leading-none"
+                          style={{
+                            fontSize: '18px',
+                            color: ch.isTeamLead ? TEAM_LEAD_COLOR : TEAM_ROLE_COLOR,
+                            fontWeight: ch.isTeamLead ? 'bold' : undefined,
+                          }}
+                        >
+                          {teamRoleLabel}
+                        </span>
+                      )}
+                      <span
+                        className="overflow-hidden text-ellipsis block leading-none"
+                        style={{
+                          fontSize: isSub ? '20px' : '22px',
+                          fontStyle: isSub ? 'italic' : undefined,
+                        }}
+                      >
+                        {activityText}
+                      </span>
+                      {ch.directoryName && (
+                        <span className="text-2xs leading-none overflow-hidden text-ellipsis block">
+                          {ch.directoryName}
+                        </span>
+                      )}
+                    </div>
+                    {closeButton}
+                  </div>
+                  {contextGauge && (
+                    <div style={{ marginTop: CONTEXT_GAUGE_GAP_PX }}>{contextGauge}</div>
+                  )}
+                </>
               )}
             </div>
           </Fragment>
