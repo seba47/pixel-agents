@@ -1,8 +1,8 @@
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 
 import type { SpawnNotice, TeamProvider } from '../../../../../core/src/teamProvider.js';
+import { claudeConfigDir } from './claudeConfigDir.js';
 import { CLAUDE_SUBAGENT_TOOLS } from './constants.js';
 
 /**
@@ -338,7 +338,7 @@ export const claudeTeamProvider: TeamProvider = {
   },
 
   getTeamMembers(teamName) {
-    const configPath = path.join(os.homedir(), '.claude', 'teams', teamName, 'config.json');
+    const configPath = path.join(claudeConfigDir(), 'teams', teamName, 'config.json');
     let raw: string;
     try {
       raw = fs.readFileSync(configPath, 'utf-8');

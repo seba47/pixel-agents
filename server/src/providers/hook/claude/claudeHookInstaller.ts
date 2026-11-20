@@ -4,7 +4,10 @@
  * the guarded read-modify-write and the backup in claudeSettingsFile.ts.
  */
 
+import * as path from 'path';
+
 import { copyBundledScript } from './bundledScripts.js';
+import { claudeConfigDir } from './claudeConfigDir.js';
 import { type ClaudeHookEntry, isOurHook, makeHookEntry } from './claudeHookEntries.js';
 import {
   type ClaudeSettings,
@@ -136,7 +139,9 @@ export async function installHooks(): Promise<void> {
     });
   }
   if (wrote) {
-    console.log('[Pixel Agents] Hooks installed in ~/.claude/settings.json');
+    console.log(
+      `[Pixel Agents] Hooks installed in ${path.join(claudeConfigDir(), 'settings.json')}`,
+    );
   }
 }
 
@@ -249,7 +254,9 @@ export async function uninstallHooks(): Promise<void> {
     });
   }
   if (wrote) {
-    console.log('[Pixel Agents] Hooks removed from ~/.claude/settings.json');
+    console.log(
+      `[Pixel Agents] Hooks removed from ${path.join(claudeConfigDir(), 'settings.json')}`,
+    );
   }
 }
 

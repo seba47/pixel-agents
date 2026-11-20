@@ -7,10 +7,10 @@
  */
 
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 
 import { isRecord } from '../../../serverConfig.js';
+import { claudeConfigDir } from './claudeConfigDir.js';
 import { type ClaudeHookEntry, hooksHoldOnlyOurs } from './claudeHookEntries.js';
 import {
   SETTINGS_BACKUP_SUFFIX,
@@ -28,9 +28,9 @@ export interface ClaudeSettings {
   [key: string]: unknown;
 }
 
-/** Returns the absolute path to ~/.claude/settings.json. */
+/** Returns the absolute path to Claude's settings.json (honours CLAUDE_CONFIG_DIR). */
 function getClaudeSettingsPath(): string {
-  return path.join(os.homedir(), '.claude', 'settings.json');
+  return path.join(claudeConfigDir(), 'settings.json');
 }
 
 /** Surfaced to the user when settings.json exists but cannot be parsed. The
