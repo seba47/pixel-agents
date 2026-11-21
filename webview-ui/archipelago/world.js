@@ -439,7 +439,8 @@ export class World {
     const sun = new THREE.DirectionalLight(pal.sunLight, pal.sunIntensity);
     sun.position.copy(pal.sunDir.clone().normalize().multiplyScalar(80));
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    const small = matchMedia('(max-width: 760px)').matches;
+    sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
     const sc = sun.shadow.camera;
     sc.left = -60;
     sc.right = 60;

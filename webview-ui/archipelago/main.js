@@ -14,7 +14,8 @@ const el = (tag, cls, html) => {
 
 // ── Renderer ──────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const phone = matchMedia('(max-width: 760px)').matches;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, phone ? 1.5 : 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -47,7 +48,20 @@ addEventListener('resize', () => {
 
 // ── Camera flights ────────────────────────────────────────────────────────
 let flight = null;
-function flyTo(pos, target, dur = 1.6) {
+/** Narrow (portrait) screens see less sideways: back the camera off to keep the islands in. */
+function fitted(pos, target, centre = true) {
+  if (camera.aspect >= 1) return { pos: pos.clone(), target: target.clone() };
+  // Portrait: no side card to make room for, so centre the islands (+5 x),
+  // back off, and look down more steeply so they fill the height.
+  const k = Math.min(3, 1.5 / camera.aspect);
+  const off = pos.clone().sub(target).multiplyScalar(k);
+  off.y *= 1.45;
+  const t = target.clone();
+  if (centre) t.x += 5;
+  return { pos: t.clone().add(off), target: t };
+}
+function flyTo(pos, target, dur = 1.6, centre = true) {
+  ({ pos, target } = fitted(pos, target, centre));
   flight = {
     p0: camera.position.clone(),
     t0: controls.target.clone(),
@@ -94,9 +108,11 @@ function load(i, first = false) {
   bloom.threshold = variant.bloom.threshold;
   document.body.classList.toggle('light', variant.key === 'day');
   followId = null;
+  if (phone && first) $('#info').classList.add('min');
   if (first) {
-    camera.position.copy(variant.camera.pos).add(new THREE.Vector3(0, 10, 18));
-    controls.target.copy(variant.camera.target);
+    const f = fitted(variant.camera.pos, variant.camera.target);
+    camera.position.copy(f.pos).add(new THREE.Vector3(0, 10, 18));
+    controls.target.copy(f.target);
   }
   flyTo(variant.camera.pos, variant.camera.target, first ? 2.4 : 1.2);
   buildLabels();
@@ -204,7 +220,7 @@ function focus(id) {
   }
   const w = walkers.find((x) => x.agent.id === id);
   const p = w.body.root.position;
-  flyTo(new THREE.Vector3(p.x + 4, p.y + 11, p.z + 16), p.clone(), 1.2);
+  flyTo(new THREE.Vector3(p.x + 4, p.y + 11, p.z + 16), p.clone(), 1.2, false);
 }
 
 // In-world labels.
