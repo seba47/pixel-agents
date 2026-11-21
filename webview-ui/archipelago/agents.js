@@ -125,6 +125,8 @@ function part(geo, material) {
   return m;
 }
 
+const BODY_SCALE = 1.35;
+
 export function makeBody(color) {
   const root = new THREE.Group();
   const inner = new THREE.Group();
@@ -197,6 +199,8 @@ export function makeBody(color) {
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.04;
   root.add(ring);
+  // A bit bigger than life-size against the props, so agents read from afar.
+  root.scale.setScalar(BODY_SCALE);
   return {
     root,
     inner,
@@ -330,7 +334,7 @@ export class Walker {
   head(out = new THREE.Vector3()) {
     return out
       .copy(this.body.root.position)
-      .add(new THREE.Vector3(0, this.pose === 'lie' ? 1.0 : 1.75, 0));
+      .add(new THREE.Vector3(0, (this.pose === 'lie' ? 1.0 : 1.75) * BODY_SCALE, 0));
   }
 }
 

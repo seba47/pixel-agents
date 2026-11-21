@@ -4,7 +4,6 @@ import {
   beachChair,
   boat,
   bush,
-  campfire,
   crystal,
   desk,
   dock,
@@ -14,13 +13,10 @@ import {
   hammock,
   holoSign,
   house,
-  lantern,
   lighthouse,
   lightBridge,
   networkOrb,
   palm,
-  parasol,
-  plankBridge,
   podTower,
   rock,
   signalMast,
@@ -163,61 +159,26 @@ function addDesk(world, x, z, screen, face = 0) {
   };
 }
 
-/** Bridge two islands with a plank bridge; returns its ends. */
-function bridgeIslands(world, A, B, opts) {
-  const ang = Math.atan2(B.z - A.z, B.x - A.x);
-  const a = [A.x + Math.cos(ang) * A.r * 0.72, A.z + Math.sin(ang) * A.r * 0.72];
-  const b = [B.x - Math.cos(ang) * B.r * 0.72, B.z - Math.sin(ang) * B.r * 0.72];
-  const span = world.addSpan(a, b, 0.5);
-  const br = plankBridge(world, span, opts);
-  world.root.add(br.group);
-  return { a, b, from: A.key, to: B.key };
-}
-
-/** Route over bridges between islands (BFS), then to the spot. */
-function router(links) {
-  return (from, to) => {
-    if (!from || from.isl === to.isl) return [[to.x, to.z]];
-    const prev = new Map([[from.isl, null]]);
-    const q = [from.isl];
-    while (q.length) {
-      const k = q.shift();
-      if (k === to.isl) break;
-      for (const L of links) {
-        const [u, v, a, b] =
-          L.from === k ? [L.from, L.to, L.a, L.b] : L.to === k ? [L.to, L.from, L.b, L.a] : [];
-        if (u && !prev.has(v)) {
-          prev.set(v, { k: u, a, b });
-          q.push(v);
-        }
-      }
-    }
-    const hops = [];
-    for (let k = to.isl; prev.get(k); k = prev.get(k).k) hops.unshift(prev.get(k));
-    const pts = [];
-    for (const h of hops) pts.push(h.a, h.b);
-    pts.push([to.x, to.z]);
-    return pts;
-  };
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. Sunset — one island per project
 // ═══════════════════════════════════════════════════════════════════════════
-const SUNSET = {
-  key: 'sunset',
-  name: 'Atardecer',
-  title: 'Islas por proyecto',
-  tagline: 'Cada proyecto es una isla. Tus agentes viven y trabajan en la isla de su proyecto.',
-  info: `
+const PROJECT_INFO = `
     <ul>
+      <li><b>Una isla por carpeta</b> donde lanzás agentes (Directory). Una carpeta nueva hace aparecer una isla nueva.</li>
       <li><b>Trabajando</b>: en su escritorio, con la laptop encendida; sale humo de la chimenea.</li>
-      <li><b>Te necesita</b>: corre al mástil, sube la bandera y salta. El <b>faro</b> del centro se pone ámbar y gira.</li>
+      <li><b>Te necesita</b>: corre al mástil, sube la bandera y salta. El <b>faro</b> del centro se pone ámbar y gira, para que lo veas aunque no mires esa isla.</li>
       <li><b>Terminó</b>: se sienta al final del muelle a esperar tu próximo mensaje.</li>
       <li><b>Sin nada</b>: descansa en la hamaca.</li>
       <li>Los <b>sub-agentes</b> son botes que salen de la isla y vuelven al terminar.</li>
     </ul>
-    <p class="why">Se adapta a tu día a día: varios proyectos (Directories) en paralelo, cada uno con su gente.</p>`,
+    <p class="why">Tocá un agente o su tarjeta para ir a su terminal; los pedidos de permiso se aprueban desde la tarjeta de la derecha.</p>`;
+
+const SUNSET = {
+  key: 'sunset',
+  name: 'Atardecer',
+  title: 'Islas por proyecto',
+  tagline: 'Golden hour: el mismo archipiélago con el sol bajo y el agua rosada.',
+  info: PROJECT_INFO,
   pal: {
     skyTop: '#2a2a6c',
     skyMid: '#b7678c',
@@ -397,256 +358,17 @@ const SUNSET = {
   },
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 2. Night — a harbour of states
-// ═══════════════════════════════════════════════════════════════════════════
-const NIGHT = {
-  key: 'night',
-  name: 'Noche',
-  title: 'Puerto por estados',
-  tagline: 'Pocas islas, una por estado. Los agentes cruzan los puentes cuando cambian de estado.',
-  info: `
-    <ul>
-      <li><b>Taller</b>: los que están trabajando, cada uno en su escritorio bajo los faroles.</li>
-      <li><b>Faro</b>: los que te necesitan. Se juntan al pie del faro, que se pone ámbar.</li>
-      <li><b>Playa</b>: los que terminaron se sientan alrededor de la fogata; los que no tienen nada, en las hamacas.</li>
-      <li><b>Llegadas</b>: el muelle por donde entran los agentes nuevos.</li>
-    </ul>
-    <p class="why">Es la versión más fácil de leer: contás personas en el faro y sabés cuántos te esperan.</p>`,
-  pal: {
-    skyTop: '#03061a',
-    skyMid: '#0b1838',
-    horizon: '#20385f',
-    sunDisc: '#e8f0ff',
-    sunDir: V(0.45, 0.3, -1),
-    sunSize: 0.0011,
-    stars: 1,
-    skyClouds: 0.35,
-    cloudColor: '#2a3a66',
-    deep: '#06112a',
-    shallow: '#12566e',
-    foam: '#7fb4d8',
-    ripple: 0.06,
-    foamAmount: 0.5,
-    waterSky: '#1f3a66',
-    sunGlint: '#6f85bc',
-    fog: '#0c1730',
-    fogDensity: 0.0078,
-    sunLight: '#9fb8ff',
-    sunIntensity: 1.2,
-    hemiSky: '#3b5aa2',
-    hemiGround: '#0a0d1a',
-    hemiIntensity: 0.85,
-    land: {
-      grass: '#3c6a4e',
-      grassLight: '#4b7d59',
-      sand: '#b8a27e',
-      sandWet: '#8a7a62',
-      rock: '#5e6478',
-      rockDark: '#33364a',
-    },
-  },
-  bloom: { strength: 1.0, radius: 0.6, threshold: 0.55 },
-  camera: { pos: V(-2, 25, 64), target: V(-7, -1, -4) },
-  build(world, crew) {
-    const T = world.addIsland({ x: -9, z: 2, r: 11, h: 1.6, seed: 31 });
-    const F = world.addIsland({ x: 17, z: -12, r: 4.6, h: 2.4, seed: 37 });
-    const P = world.addIsland({ x: 18, z: 12, r: 8.5, h: 0.9, seed: 41 });
-    const L = world.addIsland({ x: -28, z: 15, r: 4.6, h: 0.8, seed: 43 });
-    Object.assign(T, { key: 'taller' });
-    Object.assign(F, { key: 'faro' });
-    Object.assign(P, { key: 'playa' });
-    Object.assign(L, { key: 'llegada' });
-    const links = [
-      bridgeIslands(world, T, F),
-      bridgeIslands(world, T, P),
-      bridgeIslands(world, T, L),
-    ];
-    // Workshop: a big house and a row of desks under lanterns.
-    const ws = house({ w: 4.6, d: 2.8, h: 2.2, wall: '#e6d7bd', roof: '#7a4a6a' });
-    put(world, ws.group, T.x - 2, T.z - 5, 0.1);
-    ws.windowMats.forEach((m) => (m.emissiveIntensity = 2.2));
-    smoke(world, ws.group.localToWorld(ws.smokeFrom.clone()), () => true, '#8a90a8');
-    const desks = crew.map((a, i) =>
-      addDesk(world, T.x - 6 + i * 2.6, T.z + 1.5 + (i % 2) * 0.6, '#8fe3ff'),
-    );
-    world.onUpdate((t) =>
-      crew.forEach(
-        (a, i) =>
-          (desks[i].screenMat.emissiveIntensity =
-            a.state === 'work' ? 1.4 + Math.sin(t * 9 + i) * 0.2 : 0.05),
-      ),
-    );
-    const lanterns = [];
-    for (let i = 0; i < 4; i++) {
-      const ln = lantern();
-      put(world, ln.group, T.x - 7.5 + i * 4.4, T.z - 0.5);
-      lanterns.push(ln);
-    }
-    const lamp = new THREE.PointLight('#ffc77a', 18, 16, 1.6);
-    lamp.position.set(T.x - 1, 3.5, T.z + 1);
-    world.root.add(lamp);
-    scatter(world, T, 131, { palms: 4, bushes: 4, rocks: 5, flowers: 2 }, [
-      [T.x - 2, T.z - 5],
-      ...desks.map((d) => [d.x, d.z + 0.8]),
-      ...links.map((l) => l.a),
-    ]);
-    // Lighthouse.
-    const lh = lighthouse();
-    put(world, lh.group, F.x + 0.6, F.z - 0.8);
-    scatter(world, F, 137, { palms: 1, bushes: 1, rocks: 6, flowers: 0 }, [
-      [F.x + 0.6, F.z - 0.8],
-      links[0].b,
-    ]);
-    world.onUpdate((t) => {
-      const need = crew.some((a) => a.state === 'need');
-      const c = need ? '#ffb020' : '#fff1c2';
-      [lh.lampMat.emissive, lh.lampMat.color, lh.beamMat.color, lh.light.color].forEach((x) =>
-        x.set(c),
-      );
-      lh.beamMat.opacity = need ? 0.3 : 0.12;
-      lh.pivot.rotation.y = t * (need ? 1.5 : 0.35);
-      lh.lampMat.emissiveIntensity = need ? 3.5 + Math.sin(t * 8) : 1.6;
-      lh.light.intensity = need ? 14 : 6;
-    });
-    // Beach: campfire, hammocks, a moored boat.
-    const fire = campfire();
-    put(world, fire, P.x, P.z + 0.5);
-    world.onUpdate((t) => fire.userData.flicker(t));
-    const fireSeats = [0, 1, 2, 3, 4].map((i) => {
-      const a = -Math.PI / 2 + (i - 2) * 0.75;
-      const x = P.x + Math.cos(a) * 2.1;
-      const z = P.z + 0.5 + Math.sin(a) * 2.1;
-      const log = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.22, 0.22, 0.9, 7),
-        new THREE.MeshStandardMaterial({ color: '#6a4528', flatShading: true }),
-      );
-      log.rotation.z = Math.PI / 2;
-      log.rotation.y = a + Math.PI / 2;
-      log.castShadow = true;
-      put(world, log, x, z, 0, 0.18);
-      return {
-        x,
-        z,
-        face: Math.atan2(P.x - x, P.z + 0.5 - z),
-        pose: 'sit',
-        seatY: 0.3,
-        isl: 'playa',
-      };
-    });
-    const hammocks = [0, 1].map((i) => {
-      const h = hammock(i ? '#6ac8ff' : '#ff9a6a');
-      const x = P.x + 3.5 + i * 0.2;
-      const z = P.z - 3 + i * 3.4;
-      put(world, h.group, x, z, 1.2);
-      return { x, z, face: 1.2 + Math.PI / 2, pose: 'lie', seatY: 0.45, isl: 'playa' };
-    });
-    scatter(world, P, 141, { palms: 5, bushes: 2, rocks: 4, flowers: 1 }, [
-      [P.x, P.z],
-      ...fireSeats.map((s) => [s.x, s.z]),
-      ...hammocks.map((s) => [s.x, s.z]),
-      links[1].b,
-    ]);
-    const moored = boat('#e9e2d0', '#ffffff', '#4a7bd0');
-    world.root.add(moored);
-    world.onUpdate((t) => {
-      moored.position.set(P.x + 9, Math.sin(t * 1.3) * 0.08, P.z + 4);
-      moored.rotation.set(0, 0.6, Math.sin(t) * 0.04);
-    });
-    // Arrivals dock + a ferry.
-    const arr = addDock(world, L, 2.3, 5);
-    const ln = lantern();
-    put(world, ln.group, L.x + 1.5, L.z - 1);
-    scatter(world, L, 151, { palms: 2, bushes: 1, rocks: 3, flowers: 1 }, [
-      [L.x + 1.5, L.z - 1],
-      links[2].b,
-      [arr.x, arr.z],
-    ]);
-    const ferry = boat('#3a3f5a', '#e6e8f2', '#ffb020');
-    ferry.scale.setScalar(1.3);
-    world.root.add(ferry);
-    world.onUpdate((t) => {
-      const a = (t * 0.03) % 1;
-      const x = -60 + a * 34;
-      ferry.position.set(x, Math.sin(t * 1.2) * 0.1, 26);
-      ferry.rotation.y = Math.PI / 2;
-    });
-    // Fireflies over the beach.
-    const flies = Array.from({ length: 18 }, (_, i) => {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), glowMat('#d8ff8a', 4));
-      world.root.add(m);
-      return m;
-    });
-    world.onUpdate((t) =>
-      flies.forEach((m, i) =>
-        m.position.set(
-          P.x + Math.sin(t * 0.3 + i * 1.7) * 6,
-          1.5 + Math.sin(t * 0.8 + i) * 0.6,
-          P.z + Math.cos(t * 0.27 + i * 2.3) * 5,
-        ),
-      ),
-    );
-    const needSpots = [0, 1, 2].map((i) => {
-      const a = 1.9 + i * 0.6;
-      return {
-        x: F.x + 0.6 + Math.cos(a) * 1.9,
-        z: F.z - 0.8 + Math.sin(a) * 1.9,
-        face: 0,
-        pose: 'need',
-        isl: 'faro',
-      };
-    });
-    const spots = {};
-    crew.forEach((a, i) => {
-      spots[a.id] = {
-        work: { ...desks[i], isl: 'taller' },
-        need: needSpots[i % 3],
-        done: fireSeats[i],
-        idle: i % 2 ? hammocks[0] : { ...fireSeats[(i + 2) % 5], pose: 'idle' },
-      };
-    });
-    // Two agents may want the same hammock: give the second its own spot.
-    let hm = 0;
-    crew.forEach((a) => {
-      if (spots[a.id].idle.pose === 'lie') spots[a.id].idle = hammocks[hm++ % 2];
-    });
-    return {
-      spots,
-      route: router(links),
-      labels: [
-        { text: 'Workshop', sub: 'working', pos: V(T.x - 2, 6.5, T.z - 5) },
-        { text: 'Lighthouse', sub: 'needs you', pos: V(F.x, 10.5, F.z), accent: '#ffb020' },
-        { text: 'Beach', sub: 'done · idle', pos: V(P.x, 4.5, P.z - 3) },
-        { text: 'Arrivals', sub: 'new agents', pos: V(L.x, 3.5, L.z - 2) },
-      ],
-    };
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 3. Day — one island per agent
-// ═══════════════════════════════════════════════════════════════════════════
-const DAY = {
+const DAYLIGHT = {
+  ...SUNSET,
   key: 'day',
   name: 'Día',
-  title: 'Una isla por agente',
-  tagline: 'Cada agente tiene su propia isla y su casita. La isla entera te cuenta cómo está.',
-  info: `
-    <ul>
-      <li>Techo del color del agente; su nombre flota encima.</li>
-      <li><b>Trabajando</b>: en la compu, con humo en la chimenea.</li>
-      <li><b>Te necesita</b>: sube la bandera ámbar y te saluda.</li>
-      <li><b>Terminó</b>: en la reposera, bajo la sombrilla. <b>Sin nada</b>: en la hamaca.</li>
-      <li>Un <b>puente colgante</b> une al Lead con sus Teammates; los <b>sub-agentes</b> salen en bote.</li>
-      <li>El <b>banco de arena con el "+"</b> es para lanzar un agente nuevo.</li>
-    </ul>
-    <p class="why">La más personal: con pocos agentes, cada uno tiene identidad propia.</p>`,
+  tagline: 'Media tarde: luz clara, agua turquesa, todo bien legible.',
   pal: {
     skyTop: '#2b78dc',
     skyMid: '#79c2f2',
     horizon: '#e4f6fb',
     sunDisc: '#fffbe6',
-    sunDir: V(0.55, 0.85, 0.45),
+    sunDir: V(0.5, 0.7, 0.55),
     sunSize: 0.0012,
     skyClouds: 1.0,
     cloudColor: '#ffffff',
@@ -672,120 +394,6 @@ const DAY = {
     },
   },
   bloom: { strength: 0.22, radius: 0.4, threshold: 0.95 },
-  camera: { pos: V(-3, 24, 62), target: V(-5, -1, -6) },
-  build(world, crew) {
-    const pos = [
-      [-27, 1],
-      [-13, -9],
-      [2, -13],
-      [17, -8],
-      [28, 3],
-    ];
-    const isl = crew.map((a, i) => {
-      const I = world.addIsland({ x: pos[i][0], z: pos[i][1], r: 5.6, h: 1.25, seed: 60 + i * 7 });
-      I.key = `a${a.id}`;
-      return I;
-    });
-    const plus = world.addIsland({ x: 12, z: 12, r: 3.2, h: 0.35, seed: 99 });
-    plus.key = 'plus';
-    const links = [];
-    crew.forEach((a, i) => {
-      if (a.lead)
-        links.push(
-          bridgeIslands(world, isl[crew.findIndex((c) => c.id === a.lead)], isl[i], {
-            lanterns: false,
-          }),
-        );
-    });
-    const spots = {};
-    crew.forEach((a, i) => {
-      const I = isl[i];
-      const hs = house({ roof: a.color, w: 2.3, d: 1.9, h: 1.5, wall: '#fbf3e2' });
-      const hx = I.x - 1.2;
-      const hz = I.z - 2.2;
-      put(world, hs.group, hx, hz, 0.1);
-      smoke(world, hs.group.localToWorld(hs.smokeFrom.clone()), () => a.state === 'work');
-      const dk = addDesk(world, I.x + 1.6, I.z + 0.4, '#8fe3ff');
-      world.onUpdate(
-        (t) =>
-          (dk.screenMat.emissiveIntensity =
-            a.state === 'work' ? 1.0 + Math.sin(t * 9) * 0.15 : 0.05),
-      );
-      const mast = signalMast();
-      const [mx, mz] = [I.x + 2.6, I.z - 2.0];
-      put(world, mast, mx, mz);
-      world.onUpdate((t) => mast.userData.set(t, a.state === 'need'));
-      const ch = beachChair(a.color);
-      const [cx, cz] = [I.x - 2.6, I.z + 2.4];
-      put(world, ch.group, cx, cz, 0.3);
-      const ps = parasol(a.color);
-      put(world, ps, cx - 0.9, cz - 0.6);
-      const hm = hammock('#f4efe6');
-      const [hmx, hmz] = [I.x - 0.2, I.z + 3.6];
-      put(world, hm.group, hmx, hmz, 0);
-      scatter(world, I, 300 + i * 17, { palms: 3, bushes: 2, rocks: 3, flowers: 2 }, [
-        [hx, hz],
-        [I.x + 1.6, I.z - 0.4],
-        [mx, mz],
-        [cx, cz],
-        [hmx, hmz],
-        ...links.flatMap((l) => [l.a, l.b]),
-      ]);
-      spots[a.id] = {
-        work: { ...dk, isl: I.key },
-        need: { x: mx - 0.9, z: mz + 0.7, face: 0, pose: 'need', isl: I.key },
-        done: { x: cx, z: cz, face: 0.3, pose: 'sit', seatY: 0.35, isl: I.key },
-        idle: { x: hmx, z: hmz, face: Math.PI / 2, pose: 'lie', seatY: 0.45, isl: I.key },
-      };
-      if (a.sub) {
-        const b = boat('#f4efe6', '#ffffff', a.color);
-        world.root.add(b);
-        world.onUpdate((t) => {
-          b.visible = a.state === 'work';
-          const an = t * 0.3;
-          b.position.set(
-            I.x + Math.cos(an) * 8.5,
-            Math.sin(t * 1.4) * 0.08,
-            I.z + Math.sin(an) * 7.5,
-          );
-          b.rotation.y = -an;
-        });
-      }
-    });
-    // The "+" sandbar: a sign to launch a new agent.
-    const sign = new THREE.Group();
-    const post = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.06, 0.06, 1.6, 6),
-      new THREE.MeshStandardMaterial({ color: '#8d6845', flatShading: true }),
-    );
-    post.position.y = 0.8;
-    sign.add(post);
-    const board = new THREE.Mesh(
-      new THREE.BoxGeometry(1.3, 1.0, 0.1),
-      new THREE.MeshStandardMaterial({ color: '#fbf3e2', flatShading: true }),
-    );
-    board.position.y = 1.7;
-    sign.add(board);
-    const plusMat = glowMat('#ff6fae', 0.6);
-    for (const [w, h] of [
-      [0.7, 0.18],
-      [0.18, 0.7],
-    ]) {
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.04), plusMat);
-      bar.position.set(0, 1.7, 0.07);
-      sign.add(bar);
-    }
-    put(world, sign, plus.x, plus.z, -0.2);
-    world.onUpdate((t) => (plusMat.emissiveIntensity = 0.5 + Math.sin(t * 2) * 0.3));
-    const labels = crew.map((a, i) => ({
-      text: a.name,
-      sub: a.project,
-      pos: V(isl[i].x - 1.2, 5.2, isl[i].z - 2.2),
-      accent: a.color,
-    }));
-    labels.push({ text: 'New agent', pos: V(plus.x, 3.4, plus.z), accent: '#ff6fae' });
-    return { spots, route: router(links), labels };
-  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -796,44 +404,46 @@ const FLOAT = {
   name: 'Futurista',
   title: 'Islas flotantes',
   tagline:
-    'Islas flotando sobre un mar de nubes, unidas por puentes de luz a un núcleo con el orbe de la red.',
+    'Las mismas islas por proyecto, flotando sobre un mar de nubes a plena luz, unidas por puentes de luz a un núcleo.',
   info: `
     <ul>
-      <li>Una isla por proyecto, con su cartel holográfico.</li>
-      <li>Por los <b>puentes de luz</b> viajan paquetes de datos: es la actividad de cada proyecto.</li>
+      <li><b>Una isla por carpeta</b> (Directory), con su cartel arriba.</li>
+      <li><b>Trabajando</b>: en su escritorio; por el puente de luz de su isla viajan paquetes de datos hacia el núcleo.</li>
+      <li><b>Te necesita</b>: se levanta una columna de luz ámbar sobre su isla y su nodo del orbe titila.</li>
+      <li><b>Terminó</b>: se sienta en la reposera. <b>Sin nada</b>: pasea junto al domo.</li>
       <li>El <b>orbe</b> del núcleo tiene un nodo por agente, del color de su estado.</li>
-      <li><b>Te necesita</b>: se levanta una columna de luz ámbar sobre la isla.</li>
       <li>Los <b>sub-agentes</b> son drones que orbitan la isla.</li>
     </ul>
-    <p class="why">La que retoma tu idea futurista, con la estructura del archipiélago.</p>`,
+    <p class="why">Tocá un agente o su tarjeta para ir a su terminal; los pedidos de permiso se aprueban desde la tarjeta de la derecha.</p>`,
   pal: {
-    skyTop: '#0a0524',
-    skyMid: '#3b1460',
-    horizon: '#e05a8c',
-    sunDisc: '#ffb8dc',
-    sunDir: V(-0.4, 0.14, -1),
-    sunSize: 0.0022,
-    stars: 0.9,
-    cloudLow: '#2c1548',
-    cloudHigh: '#f08ab4',
+    skyTop: '#2f3fc4',
+    skyMid: '#8a86f0',
+    horizon: '#ffd3ec',
+    sunDisc: '#fff6fb',
+    sunDir: V(0.45, 0.6, 0.6),
+    sunSize: 0.0016,
+    skyClouds: 0.6,
+    cloudColor: '#ffffff',
+    cloudLow: '#7d6fd8',
+    cloudHigh: '#ffffff',
     cloudY: -26,
-    fog: '#5a2464',
-    fogDensity: 0.0072,
-    sunLight: '#ffb6e2',
-    sunIntensity: 1.7,
-    hemiSky: '#b06ad8',
-    hemiGround: '#1a0d2a',
+    fog: '#c7bdf4',
+    fogDensity: 0.0026,
+    sunLight: '#fff8f0',
+    sunIntensity: 3.2,
+    hemiSky: '#dcd4ff',
+    hemiGround: '#4a3a7a',
     hemiIntensity: 0.95,
     land: {
-      grass: '#4caa88',
-      grassLight: '#6ccfa2',
-      sand: '#d6c2e8',
-      sandWet: '#a890c0',
-      rock: '#6a5a8a',
-      rockDark: '#24183a',
+      grass: '#36b884',
+      grassLight: '#5ad6a0',
+      sand: '#f3ecff',
+      sandWet: '#c9b8ee',
+      rock: '#7a68c0',
+      rockDark: '#3a2c74',
     },
   },
-  bloom: { strength: 1.05, radius: 0.65, threshold: 0.6 },
+  bloom: { strength: 0.4, radius: 0.5, threshold: 0.86 },
   camera: { pos: V(-4, 23, 66), target: V(-10, -3, -4) },
   build(world, crew) {
     const defs = {
@@ -891,10 +501,9 @@ const FLOAT = {
       );
       // The "needs you" pillar of light.
       const pillarMat = new THREE.MeshBasicMaterial({
-        color: '#ffb020',
+        color: '#ffa31a',
         transparent: true,
         opacity: 0,
-        blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
       const pillar = new THREE.Mesh(
@@ -906,7 +515,7 @@ const FLOAT = {
       world.root.add(pillar);
       world.onUpdate((t) => {
         const on = mine.some((a) => a.state === 'need');
-        pillarMat.opacity += ((on ? 0.22 + Math.sin(t * 6) * 0.06 : 0) - pillarMat.opacity) * 0.08;
+        pillarMat.opacity += ((on ? 0.38 + Math.sin(t * 6) * 0.08 : 0) - pillarMat.opacity) * 0.08;
       });
       const ch = beachChair(neon[key]);
       const [cx, cz] = at(isl, 3.5, 0.55);
@@ -1029,4 +638,4 @@ const FLOAT = {
   },
 };
 
-export const VARIANTS = [SUNSET, NIGHT, DAY, FLOAT];
+export const VARIANTS = [DAYLIGHT, SUNSET, FLOAT];

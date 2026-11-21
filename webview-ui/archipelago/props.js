@@ -639,7 +639,15 @@ export function holoSign(label, color = '#4fe3ff') {
   cv.width = 512;
   cv.height = 128;
   const c = cv.getContext('2d');
-  c.font = '600 64px "Space Grotesk", Inter, sans-serif';
+  // A dark glass plate behind the text, so it reads on a bright sky too.
+  c.fillStyle = 'rgba(24, 18, 60, 0.72)';
+  c.beginPath();
+  c.roundRect(28, 14, 456, 100, 50);
+  c.fill();
+  c.strokeStyle = color;
+  c.lineWidth = 5;
+  c.stroke();
+  c.font = '600 58px "Space Grotesk", Inter, sans-serif';
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.shadowColor = color;
@@ -654,13 +662,13 @@ export function holoSign(label, color = '#4fe3ff') {
   const m = new THREE.MeshBasicMaterial({
     map: tex,
     transparent: true,
-    blending: THREE.AdditiveBlending,
     depthWrite: false,
+    fog: false,
     side: THREE.DoubleSide,
   });
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), m);
   plane.userData.flicker = (t) =>
-    (m.opacity = 0.75 + Math.sin(t * 3) * 0.08 + (Math.sin(t * 37) > 0.97 ? -0.4 : 0));
+    (m.opacity = 0.92 + Math.sin(t * 3) * 0.05 + (Math.sin(t * 37) > 0.98 ? -0.3 : 0));
   return plane;
 }
 
