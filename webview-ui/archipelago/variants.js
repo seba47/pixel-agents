@@ -13,7 +13,6 @@ import {
   hammock,
   holoSign,
   house,
-  lighthouse,
   lightBridge,
   networkOrb,
   palm,
@@ -166,12 +165,12 @@ const PROJECT_INFO = `
     <ul>
       <li><b>Una isla por carpeta</b> donde lanzás agentes (Directory). Una carpeta nueva hace aparecer una isla nueva.</li>
       <li><b>Trabajando</b>: en su escritorio, con la laptop encendida; sale humo de la chimenea.</li>
-      <li><b>Te necesita</b>: corre al mástil, sube la bandera y salta. El <b>faro</b> del centro se pone ámbar y gira, para que lo veas aunque no mires esa isla.</li>
+      <li><b>Te necesita</b>: corre al mástil, sube la bandera y salta; arriba aparece el aviso con <b>Aprobar</b>.</li>
       <li><b>Terminó</b>: se sienta al final del muelle a esperar tu próximo mensaje.</li>
       <li><b>Sin nada</b>: descansa en la hamaca.</li>
       <li>Los <b>sub-agentes</b> son botes que salen de la isla y vuelven al terminar.</li>
     </ul>
-    <p class="why">Tocá un agente o su tarjeta para ir a su terminal; los pedidos de permiso se aprueban desde la tarjeta de la derecha.</p>`;
+    <p class="why">Tocá la tarjeta de un agente para seguirlo e ir a su terminal; los pedidos de permiso se aprueban desde la tarjeta de la derecha.</p>`;
 
 const SUNSET = {
   key: 'sunset',
@@ -217,7 +216,6 @@ const SUNSET = {
       'horus-api': world.addIsland({ x: 13, z: -8, r: 8, h: 1.9, seed: 7 }),
       'horus-web': world.addIsland({ x: 15, z: 12, r: 7.5, h: 1.3, seed: 11 }),
       scratch: world.addIsland({ x: -30, z: -10, r: 5.5, h: 1.0, seed: 19 }),
-      rock: world.addIsland({ x: -1, z: -19, r: 3.2, h: 2.4, seed: 23 }),
     };
     for (const [k, v] of Object.entries(I)) v.key = k;
     const spots = {};
@@ -306,23 +304,6 @@ const SUNSET = {
         };
       });
     }
-    // The lighthouse: lights up amber when anyone needs you.
-    const lh = lighthouse();
-    put(world, lh.group, I.rock.x, I.rock.z);
-    scatter(world, I.rock, 77, { palms: 0, bushes: 1, rocks: 5, flowers: 0 }, [
-      [I.rock.x, I.rock.z],
-    ]);
-    world.onUpdate((t) => {
-      const need = crew.some((a) => a.state === 'need');
-      const c = need ? '#ffb020' : '#fff1c2';
-      lh.lampMat.emissive.set(c);
-      lh.lampMat.color.set(c);
-      lh.beamMat.color.set(c);
-      lh.light.color.set(c);
-      lh.beamMat.opacity = need ? 0.28 : 0.1;
-      lh.pivot.rotation.y = t * (need ? 1.6 : 0.4);
-      lh.lampMat.emissiveIntensity = need ? 3 + Math.sin(t * 8) : 1.2;
-    });
     // A sub-agent's boat around horus-web.
     const web = crew.find((a) => a.sub);
     const b = boat('#f4efe6', '#ffffff', web.color);
@@ -350,10 +331,11 @@ const SUNSET = {
         sb.rotation.y = Math.PI / 2;
       });
     }
-    const labels = Object.entries(I)
-      .filter(([k]) => k !== 'rock')
-      .map(([k, v]) => ({ text: k, pos: V(v.x, v.h + 4.8, v.z - v.r * 0.35), color: '#ffffff' }));
-    labels.push({ text: 'Lighthouse', pos: V(I.rock.x, 9.5, I.rock.z), small: true });
+    const labels = Object.entries(I).map(([k, v]) => ({
+      text: k,
+      pos: V(v.x, v.h + 4.8, v.z - v.r * 0.35),
+      color: '#ffffff',
+    }));
     return { spots, route: (f, t) => [[t.x, t.z]], labels };
   },
 };
@@ -414,7 +396,7 @@ const FLOAT = {
       <li>El <b>orbe</b> del núcleo tiene un nodo por agente, del color de su estado.</li>
       <li>Los <b>sub-agentes</b> son drones que orbitan la isla.</li>
     </ul>
-    <p class="why">Tocá un agente o su tarjeta para ir a su terminal; los pedidos de permiso se aprueban desde la tarjeta de la derecha.</p>`,
+    <p class="why">Tocá la tarjeta de un agente para seguirlo e ir a su terminal; los pedidos de permiso se aprueban desde la tarjeta de la derecha.</p>`,
   pal: {
     skyTop: '#2f3fc4',
     skyMid: '#8a86f0',
