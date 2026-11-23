@@ -1,0 +1,396 @@
+/*
+ * The archipelago theme: the whole UI in the archipelago's daylight glass,
+ * while the archipelago view is on screen (<html data-ui="archipelago">, set by
+ * archipelagoUi). The pixel UI keeps its markup; this file re-points its
+ * tokens and softens its shapes. PixelIcon and PixelText switch to line icons
+ * and plain numbers on their own.
+ */
+:root[data-ui='archipelago'] {
+  --color-bg: rgba(255, 255, 255, 0.74);
+  --color-bg-dark: #e3f1f8;
+  --color-bg-thumb: rgba(20, 40, 80, 0.08);
+  --color-border: rgba(20, 40, 80, 0.12);
+  --color-accent: #0e86d4;
+  --color-accent-bright: #2a9de6;
+  --color-panel: rgba(255, 255, 255, 0.7);
+  --color-panel-hover: rgba(255, 255, 255, 0.92);
+  --color-text: #13233f;
+  --color-text-muted: rgba(19, 35, 63, 0.58);
+  --color-text-solid: #13233f;
+  --color-text-muted-solid: #5b6f8c;
+  --color-text-on-accent: #ffffff;
+  --color-btn-bg: rgba(255, 255, 255, 0.62);
+  --color-btn-hover: rgba(255, 255, 255, 0.95);
+  --color-active-bg: rgba(14, 134, 212, 0.14);
+  --color-reset-text: #b03a3a;
+  --color-status-active: #2fb8ef;
+  --color-status-permission: #f2a10f;
+  --color-status-success: #3fbf68;
+  --color-shadow: rgba(20, 60, 110, 0.16);
+  --shadow-pixel: 0 10px 28px rgba(20, 60, 110, 0.14), 0 1px 3px rgba(20, 60, 110, 0.08);
+  --shadow-pixel-pressed: 0 2px 8px rgba(20, 60, 110, 0.14);
+  --shadow-ledge-down: 0 6px 18px rgba(20, 60, 110, 0.12);
+  --shadow-ledge-up: 0 -6px 18px rgba(20, 60, 110, 0.12);
+  --vignette: none;
+  --archi-glass-blur: blur(18px) saturate(160%);
+  color-scheme: light;
+}
+
+/* Type: a UI face at UI sizes (the pixel scale's base is 22px). Never inside
+   a terminal: xterm lays out every cell by its monospace font's measure, and
+   any other face there leaves letters off their cells (stray gaps). */
+:root[data-ui='archipelago'] *:not(.xterm, .xterm *) {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+:root[data-ui='archipelago'],
+:root[data-ui='archipelago'] body,
+:root[data-ui='archipelago'] #root {
+  font-size: 14px;
+  background: var(--color-bg-dark);
+  -webkit-font-smoothing: antialiased;
+}
+:root[data-ui='archipelago'] .text-2xs {
+  font-size: 11px;
+}
+:root[data-ui='archipelago'] .text-xs {
+  font-size: 12px;
+}
+:root[data-ui='archipelago'] .text-sm {
+  font-size: 13px;
+}
+:root[data-ui='archipelago'] .text-base {
+  font-size: 14px;
+}
+:root[data-ui='archipelago'] .text-lg {
+  font-size: 15px;
+}
+:root[data-ui='archipelago'] .text-xl {
+  font-size: 17px;
+}
+:root[data-ui='archipelago'] .text-2xl {
+  font-size: 19px;
+  font-weight: 650;
+}
+:root[data-ui='archipelago'] .text-3xl {
+  font-size: 24px;
+}
+
+/* Shapes: thin hairlines and soft corners instead of 2px boxes. */
+:root[data-ui='archipelago'] .border-2 {
+  border-width: 1px;
+}
+:root[data-ui='archipelago'] .border-r-2 {
+  border-right-width: 1px;
+}
+:root[data-ui='archipelago'] .border-t-2 {
+  border-top-width: 1px;
+}
+:root[data-ui='archipelago'] .border-b-2 {
+  border-bottom-width: 1px;
+}
+:root[data-ui='archipelago'] .rounded-none {
+  border-radius: 10px;
+}
+:root[data-ui='archipelago'] button {
+  transition:
+    background-color 0.18s,
+    color 0.18s,
+    box-shadow 0.18s,
+    transform 0.18s;
+}
+
+/* Panels: glass. */
+:root[data-ui='archipelago'] .pixel-panel {
+  border-radius: 16px;
+  border-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: var(--archi-glass-blur);
+  -webkit-backdrop-filter: var(--archi-glass-blur);
+}
+:root[data-ui='archipelago'] .shadow-pixel {
+  box-shadow: var(--shadow-pixel);
+}
+
+/* Robot avatars (in place of the pixel mug shots) */
+.archi-robot {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+}
+.archi-robot::after {
+  content: '';
+  width: 54%;
+  height: 24%;
+  margin-top: -8%;
+  border-radius: 999px;
+  background: #121428;
+  box-shadow: inset 0 0 0 1.5px rgba(191, 246, 255, 0.35);
+}
+
+/* The conversations panel (left) */
+:root[data-ui='archipelago'] .conv-search {
+  border-radius: 12px;
+  padding: 9px 12px;
+  background: rgba(19, 35, 63, 0.05);
+  border-color: transparent;
+  font-size: 13px;
+}
+:root[data-ui='archipelago'] .conv-search:hover {
+  background: rgba(19, 35, 63, 0.08);
+}
+:root[data-ui='archipelago'] .conv-heading {
+  padding: 16px 14px 6px;
+}
+:root[data-ui='archipelago'] .conv-heading h3 {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+:root[data-ui='archipelago'] .conv-row {
+  gap: 10px;
+  padding: 7px 10px;
+  margin: 1px 6px;
+  width: calc(100% - 12px);
+  border-radius: 10px;
+  line-height: 1.25;
+}
+:root[data-ui='archipelago'] .conv-row:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 10px rgba(20, 60, 110, 0.08);
+}
+:root[data-ui='archipelago'] .conv-row .leading-none {
+  line-height: 1.3;
+}
+:root[data-ui='archipelago'] .conv-row .-mt-1 {
+  margin-top: 1px;
+}
+:root[data-ui='archipelago'] .conv-avatar {
+  width: auto !important;
+}
+:root[data-ui='archipelago'] .conv-dir {
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* The toolbar (bottom-left): + is the main action */
+:root[data-ui='archipelago'] .tb-bar {
+  padding: 6px;
+  gap: 6px;
+}
+:root[data-ui='archipelago'] .tb-bar .h-52 {
+  height: 42px;
+}
+:root[data-ui='archipelago'] .tb-bar .size-52 {
+  width: 42px;
+  height: 42px;
+}
+:root[data-ui='archipelago'] .tb-launch {
+  border-radius: 12px 0 0 12px;
+  border: 0;
+  background: linear-gradient(160deg, #2aa7ec, #0e7fcb);
+  box-shadow: 0 4px 12px rgba(14, 134, 212, 0.35);
+}
+:root[data-ui='archipelago'] .tb-roster {
+  border-radius: 0 12px 12px 0;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(160deg, #2aa7ec, #0e7fcb);
+  box-shadow: 0 4px 12px rgba(14, 134, 212, 0.35);
+}
+:root[data-ui='archipelago'] .tb-bar button:not(.tb-launch):not(.tb-roster) {
+  border-radius: 12px;
+  padding-inline: 14px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Modals: a frosted sheet over a soft, blurred backdrop */
+:root[data-ui='archipelago'] .modal-backdrop {
+  background: rgba(30, 60, 100, 0.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+:root[data-ui='archipelago'] .modal-card {
+  border-radius: 20px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: var(--archi-glass-blur);
+  -webkit-backdrop-filter: var(--archi-glass-blur);
+  box-shadow: 0 24px 60px rgba(20, 60, 110, 0.22);
+}
+:root[data-ui='archipelago'] .modal-head {
+  background: transparent;
+  padding: 10px 12px 12px;
+  margin-bottom: 4px;
+}
+:root[data-ui='archipelago'] .modal-head > span {
+  color: var(--color-text);
+}
+:root[data-ui='archipelago'] .modal-card button.flex.w-full {
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+}
+
+/* Settings toggles: switches instead of ticked boxes */
+:root[data-ui='archipelago'] .chk-box {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  font-size: 0;
+  background: rgba(19, 35, 63, 0.16);
+  transition: background-color 0.2s;
+}
+:root[data-ui='archipelago'] .chk-box::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s;
+}
+:root[data-ui='archipelago'] .chk-row[data-checked='true'] .chk-box {
+  background: var(--color-accent);
+}
+:root[data-ui='archipelago'] .chk-row[data-checked='true'] .chk-box::after {
+  transform: translateX(14px);
+}
+
+/* Menus (the + drawer, dropdowns): a frosted card with roomy rows */
+:root[data-ui='archipelago'] .dropdown-card {
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: var(--archi-glass-blur);
+  -webkit-backdrop-filter: var(--archi-glass-blur);
+}
+:root[data-ui='archipelago'] .dropdown-item {
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+:root[data-ui='archipelago'] .dropdown-item:hover {
+  background: rgba(14, 134, 212, 0.1);
+}
+:root[data-ui='archipelago'] [data-testid='launch-drawer'] .text-accent-bright {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+:root[data-ui='archipelago'] [data-testid='launch-drawer'] .border-b-2 {
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+}
+
+/* The terminal panel (right): the console framed as a dark card on glass */
+:root[data-ui='archipelago'] .term-drawer {
+  background: #e9f3f9;
+  border-left-color: var(--color-border);
+}
+:root[data-ui='archipelago'] .term-body {
+  padding: 10px;
+}
+:root[data-ui='archipelago'] .term-body > * {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(20, 60, 110, 0.18);
+}
+
+/* The roster (the + button's arrow): robots on soft cards */
+:root[data-ui='archipelago'] .roster-card > button:first-child {
+  width: 92px;
+  gap: 6px;
+  padding: 12px 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+}
+:root[data-ui='archipelago'] .roster-card > button:first-child:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--color-border);
+  box-shadow: 0 6px 16px rgba(20, 60, 110, 0.12);
+}
+:root[data-ui='archipelago'] .roster-card > button:first-child span {
+  max-width: 11ch;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+:root[data-ui='archipelago'] .roster-card > button:last-child {
+  top: 6px;
+  right: 6px;
+  padding: 5px;
+  border-radius: 50%;
+  background: rgba(19, 35, 63, 0.08);
+}
+:root[data-ui='archipelago'] .roster-new {
+  width: 92px;
+  border-width: 1px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+.archi-figure {
+  display: block;
+  overflow: visible;
+}
+.archi-figure-body,
+.archi-figure-arm-r {
+  transition: transform 0.25s;
+}
+.archi-figure-on .archi-figure-body {
+  animation: archi-figure-bob 0.9s ease-in-out infinite;
+}
+.archi-figure-on .archi-figure-arm-r {
+  transform-box: fill-box;
+  transform-origin: 50% 10%;
+  animation: archi-figure-wave 0.9s ease-in-out infinite;
+}
+@keyframes archi-figure-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes archi-figure-wave {
+  0%,
+  100% {
+    transform: rotate(-150deg);
+  }
+  50% {
+    transform: rotate(-120deg);
+  }
+}
+.archi-robot-more {
+  background: #c3c9d6;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.archi-robot-more::after {
+  display: none;
+}
+
+/* While the roster is open it owns the office's foot: the crew dock steps aside. */
+:root[data-ui='archipelago'] body:has(.roster-card) .archi-dock {
+  opacity: 0;
+  pointer-events: none;
+}
+.archi-dock {
+  transition: opacity 0.2s;
+}

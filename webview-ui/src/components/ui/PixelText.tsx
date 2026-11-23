@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 
+import { useArchipelagoUi } from '../../archipelago/archipelagoMode.js';
 import { PIXEL_ICON_SCALE } from '../../constants.js';
 import { useDevicePixelRatio } from '../../hooks/useDevicePixelRatio.js';
 import { GLYPH_HEIGHT, glyphRects, splitLabel } from './pixelFont.js';
@@ -33,8 +34,19 @@ export function PixelText({
   style?: CSSProperties;
 }) {
   const dpr = useDevicePixelRatio();
+  // The archipelago theme sets numbers in its own type, not the pixel font.
+  const archipelago = useArchipelagoUi();
   const unit =
     (smaller ? devicePixelsOneStepSmaller(scale, dpr) : devicePixelsPerArtPixel(scale, dpr)) / dpr;
+  if (archipelago)
+    return (
+      <span
+        className={`inline-flex items-center whitespace-nowrap tabular-nums ${className}`}
+        style={style}
+      >
+        {text}
+      </span>
+    );
   return (
     <span
       className={`inline-flex items-center whitespace-nowrap ${shadow ? 'pixel-text-shadow ' : ''}${className}`}

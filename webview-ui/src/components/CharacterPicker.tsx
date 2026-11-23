@@ -3,12 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { CharacterProfile } from '../../../core/src/characterProfiles.js';
 import { MAX_CHARACTER_PROFILES } from '../../../core/src/characterProfiles.js';
+import { useArchipelagoUi } from '../archipelago/archipelagoMode.js';
+import { RobotFigure } from '../archipelago/RobotFigure.js';
 import { useCast } from '../characters/castStore.js';
 import { characterLabel } from '../characters/profiles.js';
 import { rosterOrder } from '../characters/recent.js';
 import type { CharacterRenderer } from '../characters/renderer.js';
 import { SpriteCanvas } from '../characters/ui/SpriteCanvas.js';
-import { CHARACTER_ANIM_MS, CHARACTER_PICKER_SPRITE_SCALE } from '../constants.js';
+import {
+  CHARACTER_ANIM_MS,
+  CHARACTER_PICKER_SPRITE_SCALE,
+  ROSTER_ROBOT_HEIGHT_PX,
+} from '../constants.js';
 import { useDevicePixelRatio } from '../hooks/useDevicePixelRatio.js';
 import { useLongPress } from '../hooks/useLongPress.js';
 import { PixelIcon } from './ui/PixelIcon.js';
@@ -199,7 +205,7 @@ function RosterCards({
           type="button"
           onClick={onNew}
           title="Add a new character"
-          className="shrink-0 w-56 flex flex-col items-center justify-center gap-2 py-4 bg-transparent border-2 border-dashed border-border rounded-none cursor-pointer text-sm text-text-muted hover:text-text active:text-text select-none"
+          className="roster-new shrink-0 w-56 flex flex-col items-center justify-center gap-2 py-4 bg-transparent border-2 border-dashed border-border rounded-none cursor-pointer text-sm text-text-muted hover:text-text active:text-text select-none"
         >
           <span className="text-2xl leading-none">+</span>
           New
@@ -279,9 +285,10 @@ function CharacterCard({ index, profile, renderer, dpr, onPick, onEdit }: Charac
   // emulated hover would leave it walking until the next tap elsewhere.
   const [hovered, setHovered] = useState(false);
   const frame = useWalkFrame(hovered);
+  const archipelago = useArchipelagoUi();
   return (
     <div
-      className="group relative shrink-0 flex"
+      className="roster-card group relative shrink-0 flex"
       onPointerEnter={(e) => e.pointerType === 'mouse' && setHovered(true)}
       onPointerLeave={() => setHovered(false)}
     >
@@ -297,12 +304,16 @@ function CharacterCard({ index, profile, renderer, dpr, onPick, onEdit }: Charac
         onContextMenu={(e) => e.preventDefault()}
         className="w-56 flex flex-col items-center justify-end gap-2 py-4 px-2 bg-bg-thumb border-2 border-transparent rounded-none cursor-pointer hover:border-border active:border-accent-bright select-none [-webkit-touch-callout:none]"
       >
-        <SpriteCanvas
-          sheet={renderer?.sheet(profile) ?? null}
-          view={{ kind: 'frame', facing: 'down', frame }}
-          scale={CHARACTER_PICKER_SPRITE_SCALE}
-          dpr={dpr}
-        />
+        {archipelago ? (
+          <RobotFigure palette={index} height={ROSTER_ROBOT_HEIGHT_PX} active={hovered} />
+        ) : (
+          <SpriteCanvas
+            sheet={renderer?.sheet(profile) ?? null}
+            view={{ kind: 'frame', facing: 'down', frame }}
+            scale={CHARACTER_PICKER_SPRITE_SCALE}
+            dpr={dpr}
+          />
+        )}
         <span className="max-w-[7ch] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-text-muted">
           {label}
         </span>

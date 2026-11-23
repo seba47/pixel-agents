@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
+import { archipelagoUi, useArchipelagoMode } from './archipelago/archipelagoMode.js';
+import { ArchipelagoView } from './archipelago/ArchipelagoView.js';
 import { toMajorMinor } from './changelogData.js';
 import { CharactersView } from './characters/ui/CharactersView.js';
 import { AgentCardBar } from './components/AgentCardBar.js';
@@ -173,6 +175,11 @@ function App() {
   // right-docked drawer.
   const isMobile = useIsMobile();
   const holo = useHoloMode();
+  // The archipelago view replaces the office's look, but not while editing the layout.
+  const archipelagoOn = useArchipelagoMode();
+  const showArchipelago = archipelagoOn && !editor.isEditMode;
+  // Its UI theme (line icons, glass, a UI font) follows it on screen.
+  useEffect(() => archipelagoUi.set(showArchipelago), [showArchipelago]);
   useHoloThemeAttribute();
   // Software keyboard: whether it is up (the key bar shows), and the height
   // to clamp the shell to so the terminal shrinks (and the PTY resizes)
@@ -427,6 +434,24 @@ function App() {
     [terminalAgentIds, selectTerminal],
   );
 
+  // The archipelago's way to an agent: its terminal pane when this office has
+  // one; otherwise (a session opened elsewhere, e.g. in Orca) the drawer
+  // closes rather than keep showing another agent's terminal, and the camera
+  // still goes to it.
+  const { close: closeTerminalDrawer } = terminalDrawer;
+  const handleArchipelagoSelect = useCallback(
+    (agentId: number) => {
+      if (terminalAgentIds.includes(agentId)) {
+        selectTerminal(agentId);
+        return;
+      }
+      closeTerminalDrawer();
+      transport.send({ type: 'focusAgent', id: agentId });
+      getOfficeState().selectAndFollow(agentId);
+    },
+    [terminalAgentIds, selectTerminal, closeTerminalDrawer],
+  );
+
   // A running conversation pressed in the desktop sidebar: its agent, as its
   // card would show it (its terminal pane, or focus without one). The phone's
   // menu takes mobileShell.openAgent.
@@ -569,6 +594,28 @@ function App() {
         activeAreaLabel={activeAreaLabel}
         tapSelectsFirst={isMobile}
       />
+      {/* Drawn over the office canvas, which keeps running underneath: its loop
+          drives the agents' state (bubbles, activity) the archipelago reads. */}
+      {showArchipelago && !isDebugMode && (
+        <ArchipelagoView
+          officeState={officeState}
+          agents={agents}
+          agentTools={agentTools}
+          subagentCharacters={subagentCharacters}
+          subagentTools={subagentTools}
+          onSelectAgent={handleArchipelagoSelect}
+          terminalAgentIds={terminalAvailable ? terminalAgentIds : null}
+          zoom={editor.zoom}
+          compact={isMobile}
+          hudRight={
+            !isMobile && terminalAvailable && terminalAgentIds.length > 0
+              ? AGENT_CARD_WIDTH_PX + 16
+              : 12
+          }
+          onCardSelect={handleArchipelagoSelect}
+          activeAgentId={terminalAvailable ? terminalDrawer.shownAgentId : null}
+        />
+      )}
 
       {!isDebugMode ? (
         <>
@@ -595,7 +642,7 @@ function App() {
 
           {/* Holo Mode: scanlines over the office, and top-right the network
               orb with the ambience switch under it. */}
-          {holo.enabled && (
+          {holo.enabled && !showArchipelago && (
             <>
               <div className="absolute inset-0 pointer-events-none holo-scanlines" />
               {!editor.isEditMode && (
@@ -620,10 +667,12 @@ function App() {
           )}
 
           {/* Vignette overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'var(--vignette)' }}
-          />
+          {!showArchipelago && (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'var(--vignette)' }}
+            />
+          )}
 
           {editor.isEditMode && editor.isDirty && (
             <EditActionBar editor={editor} editorState={editorState} />
@@ -694,7 +743,9 @@ function App() {
               among themselves (OVERLAY_*_Z_INDEX) inside this box, which sits
               at z 0 — so every piece of UI over the office (zoom buttons,
               toolbar, cards, editor panels) always draws above them. */}
-          <div className="absolute inset-0 z-0 pointer-events-none">
+          <div
+            className={`absolute inset-0 z-0 pointer-events-none ${showArchipelago ? 'hidden' : ''}`}
+          >
             <ToolOverlay
               officeState={officeState}
               agents={agents}
@@ -876,7 +927,9 @@ function App() {
               character. */}
           {!(isDebugMode && !terminalAvailable) && (
             <AgentCardBar
-              agentIds={cardAgents}
+              // The archipelago has its own crew dock: the column keeps only
+              // its terminal ribbon there.
+              agentIds={showArchipelago ? [] : cardAgents}
               activeAgentId={terminalAvailable ? terminalDrawer.shownAgentId : null}
               focusedAgentId={focusedAgentId}
               getAppearance={terminalDrawer.getAppearance}

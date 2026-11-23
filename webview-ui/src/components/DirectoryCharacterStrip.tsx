@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CHAR_FRAME_W } from '../../../core/src/assets/constants.js';
+import { useArchipelagoUi } from '../archipelago/archipelagoMode.js';
 import { useCast } from '../characters/castStore.js';
 import { characterLabel, newProfile } from '../characters/profiles.js';
 import { isOpaque, SHEET_W } from '../characters/sheet.js';
@@ -107,6 +108,7 @@ export function DirectoryCharacterStrip({ directory, onPick }: DirectoryCharacte
 function SilhouetteMugShot() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { renderer } = useCast();
+  const archipelago = useArchipelagoUi();
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d');
@@ -138,8 +140,19 @@ function SilhouetteMugShot() {
         DIRECTORY_SILHOUETTE_DOT_PX,
       );
     }
-  }, [renderer]);
+  }, [renderer, archipelago]);
 
+  // The archipelago theme: a blank robot face with "…" on its visor.
+  if (archipelago)
+    return (
+      <span
+        className="archi-robot archi-robot-more"
+        aria-hidden="true"
+        style={{ width: 24, height: 24 }}
+      >
+        …
+      </span>
+    );
   return (
     <canvas
       ref={canvasRef}

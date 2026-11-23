@@ -26,6 +26,16 @@ import {
 import { conversationTitle } from './conversationTitle.js';
 import { isInheritedClaudeSessionEnv } from './sessionEnv.js';
 
+/** Claude Code's own sub-agent types: these name no agent of the user's, so the status leaves them out. */
+const BUILT_IN_SUBAGENT_TYPES = new Set([
+  'general-purpose',
+  'Explore',
+  'Plan',
+  'statusline-setup',
+  'claude-code-guide',
+  'output-style-setup',
+]);
+
 // ── formatToolStatus: moved from src/transcriptParser.ts ──
 
 export function formatToolStatus(toolName: string, input?: unknown): string {
@@ -53,9 +63,16 @@ export function formatToolStatus(toolName: string, input?: unknown): string {
     case 'Task':
     case 'Agent': {
       const desc = typeof inp.description === 'string' ? inp.description : '';
-      return desc
-        ? `Subtask: ${desc.length > TASK_DESCRIPTION_DISPLAY_MAX_LENGTH ? desc.slice(0, TASK_DESCRIPTION_DISPLAY_MAX_LENGTH) + '\u2026' : desc}`
-        : 'Running subtask';
+      const short =
+        desc.length > TASK_DESCRIPTION_DISPLAY_MAX_LENGTH
+          ? desc.slice(0, TASK_DESCRIPTION_DISPLAY_MAX_LENGTH) + '\u2026'
+          : desc;
+      // A custom agent (.claude/agents/<name>.md) is named in front, so the
+      // office shows who runs the task: "Subtask: network · Check DNS".
+      const type = typeof inp.subagent_type === 'string' ? inp.subagent_type.trim() : '';
+      const custom = type && !BUILT_IN_SUBAGENT_TYPES.has(type) ? type : '';
+      if (custom) return short ? `Subtask: ${custom} \u00b7 ${short}` : `Subtask: ${custom}`;
+      return short ? `Subtask: ${short}` : 'Running subtask';
     }
     case 'AskUserQuestion':
       return 'Waiting for your answer';

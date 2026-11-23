@@ -586,6 +586,19 @@ export const EDIT_LONG_PRESS_MAX_MOVE_PX = 10;
 
 /** CSS pixels per sprite pixel on the phone roster's character cards. */
 export const CHARACTER_PICKER_SPRITE_SCALE = 2;
+/** The roster's robots (archipelago theme): about the pixel sprite's height at scale 2. */
+export const ROSTER_ROBOT_HEIGHT_PX = 62;
+/** The robot's fixed colours (its body takes the agent's), as the 3D one has them. */
+export const ARCHIPELAGO_ROBOT = {
+  light: '#ffffff',
+  dark: '#000000',
+  antenna: '#c9ccd6',
+  glow: '#4fd1ff',
+  belly: '#f4f1ea',
+  visor: '#121428',
+  eyes: '#bff6ff',
+  feet: '#2a2d40',
+} as const;
 /** Gap a viewport-fitted Dropdown (the launch drawer) keeps from the top of
  *  the viewport when its content is taller than the room above its anchor. */
 export const DROPDOWN_VIEWPORT_MARGIN_PX = 8;
@@ -944,3 +957,28 @@ export const HOLO_ORB_SATELLITE = '#e8f6ff';
 export const HOLO_ORB_HIT_RADIUS = 5;
 /** Satellites (sub-agents) orbit this far outside their agent's node. */
 export const HOLO_ORB_SATELLITE_ORBIT = 5;
+
+// ── Archipelago view (Settings → Archipelago View, experiment) ───────────────
+/** localStorage key for the archipelago view (per browser). */
+/** Each island's chosen style (Archipelago view), by Directory name, per browser. */
+export const ARCHIPELAGO_ISLAND_THEMES_KEY = 'pixel-agents.archipelago.islandThemes';
+export const ARCHIPELAGO_STORAGE_KEY = 'pixel-agents.archipelago';
+/** Agent body colours in the archipelago, by palette index. */
+export const ARCHIPELAGO_AGENT_COLORS = [
+  '#ff6fae',
+  '#4fd1ff',
+  '#ffcc4d',
+  '#6fe08a',
+  '#b48cff',
+  '#ff8a5a',
+  '#5ad6c8',
+  '#e0e46a',
+];
+/** How often the React overlay (needs-you cards, counts) re-reads the crew. */
+export const ARCHIPELAGO_HUD_INTERVAL_MS = 300;
+/** How often the archipelago asks for the running agents' conversation titles. */
+export const ARCHIPELAGO_TITLES_INTERVAL_MS = 30_000;
+/** An agent "working" with nothing changing this long reads as without activity (idle). */
+export const ARCHIPELAGO_QUIET_MS = 3 * 60_000;
+/** "Clean up" hides agents from elsewhere (Orca) quiet at least this long. */
+export const ARCHIPELAGO_CLEAN_MS = 10 * 60_000;

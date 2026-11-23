@@ -133,7 +133,7 @@ export function BottomToolbar({
           />
         </div>
       )}
-      <div className="pointer-events-auto flex items-center gap-4 pixel-panel p-4">
+      <div className="tb-bar pointer-events-auto flex items-center gap-4 pixel-panel p-4">
         {/* The + and, right of it, the roster's arrow: one card, two buttons,
             as on the phone's bar. The arrow points up while the roster is
             shut and turns down while it is open; a press toggles it. */}
@@ -163,7 +163,7 @@ export function BottomToolbar({
                 onClick={drawerHover.press}
                 aria-label="New agent"
                 title="Launch agent"
-                className={`${LAUNCH_SQUARE} press-juice border-accent text-white cursor-pointer ${isDrawerOpen ? 'bg-accent-bright' : 'bg-accent hover:bg-accent-bright'}`}
+                className={`tb-launch ${LAUNCH_SQUARE} press-juice border-accent text-white cursor-pointer ${isDrawerOpen ? 'bg-accent-bright' : 'bg-accent hover:bg-accent-bright'}`}
               >
                 {/* A quarter turn while its drawer is open (a + looks the
                     same either way, so it rests crisp). */}
@@ -204,7 +204,7 @@ export function BottomToolbar({
             }
             // Enabled even when nothing can launch: a pick then edits.
             style={{ width: ROSTER_ARROW_WIDTH_PX }}
-            className={`h-52 press-juice flex items-center justify-center border-2 border-l-bg/40 rounded-none select-none cursor-pointer ${
+            className={`tb-roster h-52 press-juice flex items-center justify-center border-2 border-l-bg/40 rounded-none select-none cursor-pointer ${
               canLaunch
                 ? `border-accent text-white ${menus.isRosterOpen || isCharactersOpen ? 'bg-accent-bright' : 'bg-accent hover:bg-accent-bright'}`
                 : 'bg-btn-bg border-border text-text-muted'

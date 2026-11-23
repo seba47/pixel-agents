@@ -288,6 +288,23 @@ describe('claudeProvider', () => {
         'Subtask: Research',
       );
     });
+    it('names a custom agent in front of the description', () => {
+      expect(
+        claudeProvider.formatToolStatus('Agent', {
+          subagent_type: 'network',
+          description: 'Check DNS',
+        }),
+      ).toBe('Subtask: network \u00b7 Check DNS');
+      expect(claudeProvider.formatToolStatus('Agent', { subagent_type: 'network' })).toBe(
+        'Subtask: network',
+      );
+      expect(
+        claudeProvider.formatToolStatus('Agent', {
+          subagent_type: 'general-purpose',
+          description: 'Research',
+        }),
+      ).toBe('Subtask: Research');
+    });
     it('falls back to "Using X" for unknown tools', () => {
       expect(claudeProvider.formatToolStatus('FancyTool', {})).toBe('Using FancyTool');
     });

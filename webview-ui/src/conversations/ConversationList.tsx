@@ -153,7 +153,7 @@ function SearchField({ onPress, roomy }: { onPress: () => void; roomy: boolean }
         type="button"
         data-testid="conversations-search"
         onClick={onPress}
-        className={`w-full flex items-center gap-6 px-6 ${roomy ? 'py-6' : 'py-3'} bg-bg-dark border-2 border-border rounded-none cursor-text text-left text-sm text-text-muted hover:border-accent`}
+        className={`conv-search w-full flex items-center gap-6 px-6 ${roomy ? 'py-6' : 'py-3'} bg-bg-dark border-2 border-border rounded-none cursor-text text-left text-sm text-text-muted hover:border-accent`}
       >
         <PixelIcon name="search" scale={1} />
         Search conversations
@@ -188,7 +188,7 @@ function TextButton({
  *  `action` (a "See all") at its other end. */
 function SectionHeading({ children, action }: { children: string; action?: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-8 pl-10 pr-8 pt-10 pb-4">
+    <div className="conv-heading flex items-baseline justify-between gap-8 pl-10 pr-8 pt-10 pb-4">
       <h3 className="m-0 text-2xs font-normal tracking-wider uppercase text-text-muted">
         {children}
       </h3>
@@ -254,7 +254,7 @@ function DirectorySection({
         onClick={onToggle}
         aria-expanded={expanded}
         title={directory.path}
-        className={`group w-full flex items-center gap-6 px-6 ${roomy ? 'py-6' : 'py-3'} border-2 rounded-none cursor-pointer text-left text-sm leading-tight ${
+        className={`conv-dir group w-full flex items-center gap-6 px-6 ${roomy ? 'py-6' : 'py-3'} border-2 rounded-none cursor-pointer text-left text-sm leading-tight ${
           expanded ? 'bg-btn-bg border-border' : 'bg-transparent border-transparent hover:bg-btn-bg'
         } ${empty ? 'text-text-muted' : 'text-text'}`}
       >
@@ -385,9 +385,9 @@ export function ConversationRow({ conversation, where, onPress, statusFor, now, 
       data-testid="conversation-row"
       onClick={onPress}
       title={agentId !== undefined ? `Go to "${title}"` : `Resume "${title}"`}
-      className={`w-full flex items-center gap-8 px-10 ${roomy ? 'py-8' : where ? 'py-3' : 'py-5'} bg-transparent border-none rounded-none cursor-pointer text-left text-text hover:bg-btn-bg`}
+      className={`conv-row w-full flex items-center gap-8 px-10 ${roomy ? 'py-8' : where ? 'py-3' : 'py-5'} bg-transparent border-none rounded-none cursor-pointer text-left text-text hover:bg-btn-bg`}
     >
-      <span className="shrink-0 flex" style={{ width: MUGSHOT_CROP_SIDE_PX }}>
+      <span className="conv-avatar shrink-0 flex" style={{ width: MUGSHOT_CROP_SIDE_PX }}>
         {palette !== undefined ? (
           <CharacterMugShot palette={palette} repeat={repeat ?? 0} zoom={1} />
         ) : (

@@ -1,0 +1,611 @@
+/* The archipelago view (experiment): daylight glass over a 3D scene. */
+.archi {
+  --archi-glass: rgba(255, 255, 255, 0.62);
+  --archi-glass-strong: rgba(255, 255, 255, 0.82);
+  --archi-line: rgba(20, 40, 80, 0.12);
+  --archi-text: #12203a;
+  --archi-muted: rgba(18, 32, 58, 0.62);
+  --archi-work: #2fb8ef;
+  --archi-need: #ffb020;
+  --archi-done: #4fcf72;
+  --archi-shadow: 0 12px 32px rgba(20, 60, 110, 0.18);
+  overflow: hidden;
+  background: #cdedf8;
+}
+.archi,
+.archi * {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+.archi-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  touch-action: none;
+  outline: none;
+}
+.archi-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.archi-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -100%) translateY(-6px);
+  white-space: nowrap;
+}
+.archi-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px 4px 5px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--archi-text);
+  background: var(--archi-glass-strong);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--archi-line);
+  border-left: 3px solid var(--archi-work);
+  box-shadow: var(--archi-shadow);
+}
+.archi-tag.archi-need {
+  background: var(--archi-need);
+  color: #2a1a00;
+  animation: archi-bob 1.2s ease-in-out infinite;
+}
+@keyframes archi-bob {
+  50% {
+    transform: translate(-50%, -100%) translateY(-11px);
+  }
+}
+.archi-face {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+.archi-act {
+  font-weight: 500;
+  color: var(--archi-muted);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.archi-need .archi-act {
+  color: #4a3000;
+}
+.archi-place {
+  pointer-events: auto;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--archi-text);
+  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.85);
+}
+.archi-rule {
+  width: 1px;
+  height: 16px;
+  margin: 4px auto 0;
+  background: currentColor;
+  opacity: 0.45;
+}
+
+/* HUD: counts and the needs-you cards, top-right of the office */
+.archi-hud {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 12px;
+  width: min(290px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+.archi-hud > * {
+  pointer-events: auto;
+}
+.archi-glass {
+  background: var(--archi-glass);
+  backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--archi-line);
+  box-shadow: var(--archi-shadow);
+}
+.archi-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.archi-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--archi-text);
+}
+.archi-chip-need {
+  background: var(--archi-need);
+  color: #2a1a00;
+  box-shadow: var(--archi-shadow);
+}
+.archi-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2a1a00;
+}
+.archi-dot.archi-work {
+  background: var(--archi-work);
+}
+.archi-dot.archi-done {
+  background: var(--archi-done);
+}
+.archi-need-card {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border-left: 3px solid var(--archi-need);
+  color: var(--archi-text);
+}
+.archi-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.archi-who small {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--archi-muted);
+}
+.archi-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.archi-what {
+  margin: 8px 0 10px;
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.archi-btn {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #2a1a00;
+  background: var(--archi-need);
+  cursor: pointer;
+}
+.archi-btn:hover {
+  filter: brightness(1.06);
+}
+
+/* The crew dock: one card per agent along the office's foot (replaces the
+   card column while the archipelago shows) */
+.archi-dock {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 62px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+  max-width: calc(100% - 24px);
+  overflow-x: auto;
+}
+.archi-crew {
+  flex-shrink: 0;
+  width: 184px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--archi-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.archi-crew:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+.archi-crew-on {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: var(--archi-line);
+}
+.archi-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.archi-avatar-bot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+}
+.archi-avatar-bot::after {
+  content: '';
+  width: 17px;
+  height: 7px;
+  border-radius: 6px;
+  background: #121428;
+  margin-top: -3px;
+}
+.archi-st {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+.archi-st-work {
+  background: var(--archi-work);
+}
+.archi-st-need {
+  background: var(--archi-need);
+}
+.archi-st-done {
+  background: var(--archi-done);
+}
+.archi-st-idle {
+  background: #a4acd0;
+}
+.archi-id {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.archi-crew-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+.archi-crew-proj {
+  font-size: 11.5px;
+  color: var(--archi-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.archi-doing {
+  font-size: 11.5px;
+  color: var(--archi-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.archi-ctx {
+  display: block;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(20, 40, 80, 0.1);
+  overflow: hidden;
+}
+.archi-ctx i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+.archi-ctx-low {
+  background: #4fcf72;
+}
+.archi-ctx-mid {
+  background: #ffcc4d;
+}
+.archi-ctx-high {
+  background: #ff6a5a;
+}
+
+/* A Sub-agent's card: narrower, set in a little from its parent's */
+.archi-crew-sub {
+  width: 160px;
+  border-left: 2px solid var(--archi-line);
+  border-radius: 0 12px 12px 0;
+}
+.archi-crew-sub .archi-avatar-bot {
+  width: 26px;
+  height: 26px;
+}
+
+/* Marks an agent whose terminal is elsewhere (Orca): selecting it can't show its console here */
+.archi-ext {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  vertical-align: 1px;
+  color: var(--archi-muted);
+  background: rgba(20, 40, 80, 0.08);
+}
+
+/* A card's close / hide control, top-right, shown on hover */
+.archi-crew {
+  position: relative;
+}
+.archi-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(19, 35, 63, 0.08);
+  color: var(--archi-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
+}
+.archi-crew:hover .archi-close,
+.archi-close:focus-visible {
+  opacity: 1;
+}
+.archi-close:hover {
+  background: rgba(19, 35, 63, 0.16);
+  color: var(--archi-text);
+}
+/* The ask before ending a session launched here */
+.archi-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--archi-text);
+}
+.archi-confirm button {
+  padding: 5px 9px;
+  border-radius: 8px;
+  border: 0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(19, 35, 63, 0.08);
+  color: var(--archi-text);
+}
+.archi-confirm .archi-confirm-yes {
+  background: #e5484d;
+  color: #ffffff;
+}
+/* Clean up: hide quiet agents from elsewhere */
+.archi-clean {
+  border: 1px solid var(--archi-line);
+  cursor: pointer;
+}
+.archi-clean:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Finished, not read yet: a green tag that floats over the head until you look */
+.archi-tag.archi-unread {
+  background: #3fbf68;
+  color: #ffffff;
+  border-color: transparent;
+  animation: archi-float 1.8s ease-in-out infinite;
+}
+.archi-tag.archi-unread .archi-act {
+  color: rgba(255, 255, 255, 0.92);
+}
+.archi-tag.archi-unread .archi-face {
+  box-shadow: 0 0 0 2px #ffffff;
+}
+@keyframes archi-float {
+  50% {
+    transform: translate(-50%, -100%) translateY(-12px);
+  }
+}
+.archi-chip-unread {
+  background: #3fbf68;
+  color: #ffffff;
+  border: 0;
+  cursor: pointer;
+  box-shadow: var(--archi-shadow);
+}
+.archi-chip-unread:hover {
+  filter: brightness(1.06);
+}
+.archi-crew-unread {
+  border-color: #3fbf68;
+  box-shadow: inset 0 0 0 1px #3fbf68;
+  background: rgba(63, 191, 104, 0.1);
+}
+.archi-new {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: 1px;
+  color: #ffffff;
+  background: #3fbf68;
+}
+
+/* Moving around: one button per island (1–9 on the keyboard), and everything */
+.archi-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+}
+.archi-nav button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 150px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--archi-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.archi-nav button:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+.archi-nav kbd {
+  font: inherit;
+  font-size: 10px;
+  color: var(--archi-muted);
+}
+.archi-nav-help {
+  width: 100%;
+  padding: 2px 8px 3px;
+  text-align: right;
+  font-size: 10.5px;
+  color: var(--archi-muted);
+}
+
+.archi-nav-isl {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+}
+.archi-nav-isl:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+.archi-nav .archi-nav-style {
+  padding: 5px 6px 5px 2px;
+  color: var(--archi-muted);
+  opacity: 0.55;
+}
+.archi-nav .archi-nav-style:hover {
+  opacity: 1;
+  background: transparent;
+}
+
+/* An island's style: asked when it's new, changed from the pencil */
+.archi-style-card {
+  width: 100%;
+  padding: 11px 12px 12px;
+  border-radius: 14px;
+  color: var(--archi-text);
+}
+.archi-style-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 9px;
+  font-size: 12.5px;
+}
+.archi-style-title b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.archi-style-x {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(19, 35, 63, 0.08);
+  color: var(--archi-muted);
+  cursor: pointer;
+}
+.archi-style-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.archi-style-opt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border: 1px solid var(--archi-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--archi-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.archi-style-opt:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+.archi-style-opt small {
+  margin-left: auto;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #0e86d4;
+}
+.archi-style-on {
+  border-color: #0e86d4;
+  box-shadow: inset 0 0 0 1px #0e86d4;
+}
+/* Each style's swatch: its ground and landmark colours */
+.archi-style-opt i {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 5px;
+}
+.archi-style-beach i {
+  background: linear-gradient(135deg, #73c159 50%, #f7e3b2 50%);
+}
+.archi-style-company i {
+  background: linear-gradient(135deg, #9fd4f0 55%, #5fae55 55%);
+}
+.archi-style-lab i {
+  background: linear-gradient(135deg, #e8eef5 50%, #7affc4 50%);
+}
+.archi-style-device i {
+  background: linear-gradient(135deg, #2a2d36 50%, #ffd36b 50%);
+}
+.archi-style-gym i {
+  background: linear-gradient(135deg, #e05a4a 50%, #2a2c34 50%);
+}

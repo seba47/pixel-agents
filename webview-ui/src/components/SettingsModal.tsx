@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 
+import { archipelagoMode, useArchipelagoMode } from '../archipelago/archipelagoMode.js';
 import { holoMode } from '../holo/holoMode.js';
 import { useHoloMode } from '../holo/useHoloMode.js';
 import { officeRadio } from '../music/musicEngine.js';
@@ -77,6 +78,7 @@ export function SettingsModal({
   // The office radio's player is a per-browser setting the radio keeps itself.
   const radio = useOfficeRadio();
   const holo = useHoloMode();
+  const archipelago = useArchipelagoMode();
   const [soundLocal, setSoundLocal] = useState(isSoundEnabled);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [assetDirDraft, setAssetDirDraft] = useState('');
@@ -217,6 +219,12 @@ export function SettingsModal({
           title="A futuristic skin: neon room, mission tags, the agent network orb, day and night"
           checked={holo.enabled}
           onChange={() => holoMode.setEnabled(!holo.enabled)}
+        />
+        <Checkbox
+          label="Archipelago View"
+          title="Experiment: the office as islands, one per Directory, in 3D"
+          checked={archipelago}
+          onChange={() => archipelagoMode.set(!archipelago)}
         />
         <Checkbox
           label="Watch All Sessions"

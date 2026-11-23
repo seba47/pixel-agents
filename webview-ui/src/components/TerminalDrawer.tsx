@@ -55,7 +55,7 @@ export function TerminalDrawer({
     // as a little more of the panel's background.
     <div className={`h-full shrink-0 ${rendered ? 'flex' : 'hidden'}`}>
       <div
-        className="h-full flex justify-start overflow-hidden bg-bg border-l-2 border-border"
+        className="term-drawer h-full flex justify-start overflow-hidden bg-bg border-l-2 border-border"
         style={{ width: shown ? widthPx : 0, transition: panelTransition }}
         onTransitionEnd={onPanelTransitionEnd}
       >
@@ -78,7 +78,7 @@ export function TerminalDrawer({
             title="Drag to resize"
           />
 
-          <div className="relative flex-1 min-h-0 p-4">
+          <div className="term-body relative flex-1 min-h-0 p-4">
             <TerminalPaneStack
               agentIds={agentIds}
               shownAgentId={shownAgentId}

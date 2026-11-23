@@ -57,7 +57,7 @@ export function Modal({
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/50 ${closing ? 'backdrop-out' : 'backdrop-in'}`}
+        className={`modal-backdrop fixed inset-0 bg-black/50 ${closing ? 'backdrop-out' : 'backdrop-in'}`}
         style={{ zIndex }}
         onClick={onClose}
       />
@@ -73,11 +73,11 @@ export function Modal({
         style={{ zIndex: zIndex + 1 }}
       >
         <div
-          className={`pointer-events-auto bg-bg border-2 border-border rounded-none shadow-pixel p-4 min-w-[min(320px,100%)] max-w-full max-h-full overflow-y-auto overflow-x-hidden ${closing ? 'modal-pop-out' : 'modal-pop-in'} ${className}`}
+          className={`modal-card pointer-events-auto bg-bg border-2 border-border rounded-none shadow-pixel p-4 min-w-[min(320px,100%)] max-w-full max-h-full overflow-y-auto overflow-x-hidden ${closing ? 'modal-pop-out' : 'modal-pop-in'} ${className}`}
         >
           {/* Sticky so the close button stays reachable while long content
               (changelog, settings) scrolls under it. */}
-          <div className="sticky top-0 z-10 bg-bg flex items-center justify-between py-4 px-10 border-b border-border mb-4">
+          <div className="modal-head sticky top-0 z-10 bg-bg flex items-center justify-between py-4 px-10 border-b border-border mb-4">
             <span className="text-accent-bright text-2xl">{title}</span>
             <Button variant="ghost" size="icon" onClick={onClose} title="Close">
               <PixelIcon name="close" />

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
+import { useArchipelagoUi } from '../archipelago/archipelagoMode.js';
+import { RobotAvatar } from '../archipelago/RobotAvatar.js';
 import {
   MUGSHOT_CROP_LEFT_COL,
   MUGSHOT_CROP_SIDE_PX,
@@ -40,6 +42,7 @@ export function CharacterMugShot({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Redraw when the character sprites change (the cast arrives or is edited).
   const sprites = useSyncExternalStore(subscribeCharacterTemplates, getCharacterTemplatesVersion);
+  const archipelago = useArchipelagoUi();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -57,6 +60,10 @@ export function CharacterMugShot({
     ctx.clearRect(0, 0, side, side);
     ctx.drawImage(full, MUGSHOT_CROP_LEFT_COL * zoom, cropTop * zoom, side, side, 0, 0, side, side);
   }, [palette, repeat, zoom, cropTop, sprites]);
+
+  // The archipelago theme shows the agent's robot instead of the pixel face.
+  if (archipelago)
+    return <RobotAvatar palette={palette} size={Math.max(24, MUGSHOT_CROP_SIDE_PX * zoom)} />;
 
   return (
     <canvas
