@@ -24,7 +24,7 @@ interface ArchipelagoViewProps extends Omit<CrewSource, 'titles'> {
   /** The agent whose terminal is shown, highlighted in the crew dock. */
   activeAgentId: number | null;
   /** Agents with a terminal in this office; null where the office has no
-   *  terminals at all (VS Code, watch-only). The rest run elsewhere (Orca). */
+   *  terminals at all (VS Code, watch-only). The rest run elsewhere (Orca, another terminal). */
   terminalAgentIds: number[] | null;
   /** The office's zoom level: its +/− buttons move the 3D camera in and out. */
   zoom: number;
@@ -158,11 +158,13 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
     sceneRef.current?.zoomBy(props.zoom > prev ? ZOOM_IN_STEP : 1 / ZOOM_IN_STEP);
   }, [props.zoom]);
 
-  /** Runs outside this office (Orca): closing it only takes it off the view. */
+  /** Runs outside this office (Orca, another terminal): closing it only takes it off the view. */
   const external = (a: Shown) =>
     a.parentId === null &&
     props.terminalAgentIds !== null &&
     !props.terminalAgentIds.includes(a.id);
+  /** Quiet long enough that, from elsewhere, its session has most likely ended. */
+  const inactive = (a: Shown) => a.state !== 'need' && a.quietMs >= ARCHIPELAGO_CLEAN_MS;
   /** Closing works only in an office with terminals (standalone). */
   const closable = (a: Shown) => a.parentId === null && props.terminalAgentIds !== null;
   const close = (id: number) => {
@@ -172,9 +174,7 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
   };
   // Clean up: hide every agent from elsewhere quiet long enough. Never the
   // ones launched here (closing those would end their session).
-  const stale = crew.filter(
-    (a) => external(a) && a.state !== 'need' && a.quietMs >= ARCHIPELAGO_CLEAN_MS,
-  );
+  const stale = crew.filter((a) => external(a) && inactive(a));
 
   // A new island (no style chosen yet) asks for one; the pencil asks again.
   const asking = restyling ?? islands.find((n) => islandThemes.get(n) === undefined) ?? null;
@@ -219,7 +219,7 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
             <button
               type="button"
               className="archi-chip archi-glass archi-clean"
-              title={`Hide ${stale.length} agent(s) from Orca with no activity for ${minutes(ARCHIPELAGO_CLEAN_MS)}+ min. Their sessions keep running there.`}
+              title={`Hide ${stale.length} agent(s) from outside this web with no activity for ${minutes(ARCHIPELAGO_CLEAN_MS)}+ min. If a session is still running, it keeps running where it is.`}
               onClick={() => stale.forEach((a) => close(a.id))}
             >
               <LineIcon name="hide" size={13} />
@@ -336,7 +336,7 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
                   className="archi-close"
                   title={
                     external(a)
-                      ? 'Hide from the office (the session keeps running in Orca)'
+                      ? 'Hide from the office (the session keeps running in its own terminal)'
                       : 'Close this session'
                   }
                   onClick={(e) => {
@@ -367,14 +367,27 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
                   <span className="archi-crew-name">
                     {a.name}
                     {a.unread && <span className="archi-new">Nuevo</span>}
-                    {external(a) && (
-                      <span
-                        className="archi-ext"
-                        title="Runs in a terminal outside this office (e.g. Orca)"
-                      >
-                        en Orca
-                      </span>
-                    )}
+                    {external(a) &&
+                      (inactive(a) ? (
+                        <button
+                          type="button"
+                          className="archi-ext archi-ext-off"
+                          title={`No activity for ${minutes(a.quietMs)} min: its terminal was most likely closed. Click to hide it.`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            close(a.id);
+                          }}
+                        >
+                          inactiva
+                        </button>
+                      ) : (
+                        <span
+                          className="archi-ext"
+                          title="Its terminal is outside this web (Orca, another terminal, or a session from before a restart): you can watch it here, not type into it."
+                        >
+                          externo
+                        </span>
+                      ))}
                   </span>
                   <span className="archi-crew-proj" title={a.title ?? a.project}>
                     {a.parentId !== null ? `↳ ${a.parentName}` : (a.title ?? a.project)}

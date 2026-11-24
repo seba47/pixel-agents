@@ -7,6 +7,7 @@ import {
   restoreBackgroundSpawns,
   stillRunningSpawns,
 } from './backgroundSpawns.js';
+import { isGuessedName, resolveDirectoryName } from './directoryNames.js';
 import { getHookProvider } from './transcriptParser.js';
 import type { AgentState } from './types.js';
 
@@ -65,7 +66,11 @@ export function restoredAgentInit(p: PersistedAgent): Omit<AgentStateInit, 'isEx
       p.jsonlFile,
       getHookProvider()?.team,
     ),
-    directoryName: p.directoryName ?? p.folderName,
+    // A name saved as the old guess ("poc" for iphone-duo-maui-poc) is
+    // resolved again, now that resolution knows better.
+    directoryName: isGuessedName(p.directoryName ?? p.folderName, p.projectDir)
+      ? (resolveDirectoryName({ projectDir: p.projectDir }) ?? p.directoryName ?? p.folderName)
+      : (p.directoryName ?? p.folderName),
     teamName: p.teamName,
     agentName: p.agentName,
     // A named agent is a teammate; never restore it as a lead (guards against

@@ -33,7 +33,10 @@ import {
   TERMINAL_DISABLED_BY_FLAG_REASON,
   WILDCARD_HOSTNAMES,
 } from './constants.js';
+import { listDirectories } from './directories.js';
+import { directoryNameIn, setDirectoryNameResolver } from './directoryNames.js';
 import { FileStateAdapter } from './fileStateAdapter.js';
+import { hostDirectory } from './hostDirectory.js';
 import {
   claudeProvider,
   copyHookScript,
@@ -285,6 +288,10 @@ async function main(): Promise<void> {
   // External asset directories are merged at startup too, so directories added
   // in a previous session survive a restart. buildAssetCache is the shared
   // loader used by both the standalone server and the VS Code adapter.
+  // Sessions this server didn't launch (Orca, another terminal, a restart)
+  // join the island of the Directory they run in, by the user's own names.
+  setDirectoryNameResolver((ctx) => directoryNameIn(listDirectories([hostDirectory()]), ctx));
+
   console.log('[Pixel Agents] Loading assets...');
   const assetCache: AssetCache = await buildAssetCache(
     distRoot,

@@ -341,6 +341,7 @@
 /* Marks an agent whose terminal is elsewhere (Orca): selecting it can't show its console here */
 .archi-ext {
   margin-left: 6px;
+  border: 0;
   padding: 1px 6px;
   border-radius: 999px;
   font-size: 10px;
@@ -608,4 +609,14 @@
 }
 .archi-style-gym i {
   background: linear-gradient(135deg, #e05a4a 50%, #2a2c34 50%);
+}
+
+/* An external agent quiet long enough to be most likely closed: click hides it */
+.archi-ext-off {
+  cursor: pointer;
+  color: #9a6a10;
+  background: rgba(242, 161, 15, 0.16);
+}
+.archi-ext-off:hover {
+  background: rgba(242, 161, 15, 0.3);
 }

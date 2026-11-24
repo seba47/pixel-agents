@@ -44,6 +44,7 @@ import {
   PROJECT_SCAN_INTERVAL_MS,
 } from './constants.js';
 import { clearContextUsage, seedContextUsage } from './contextUsage.js';
+import { resolveDirectoryName } from './directoryNames.js';
 import type { DismissalTracker } from './dismissalTracker.js';
 import { assignPaletteIfNeeded } from './paletteAssigner.js';
 import { pathsMatch } from './pathKey.js';
@@ -597,17 +598,9 @@ export function setHookProvider(provider: HookProvider): void {
  * the label the Areas UI keys on. Registered by the VS Code adapter (which maps
  * it to a workspace folder name); unset in standalone, which falls back to basename.
  */
-export type DirectoryNameResolver = (ctx: {
-  cwd?: string;
-  projectDir?: string;
-}) => string | undefined;
-
-let directoryNameResolver: DirectoryNameResolver | null = null;
-
-/** Register the host's cwd/projectDir → Directory name resolver (VS Code only). */
-export function setDirectoryNameResolver(resolver: DirectoryNameResolver): void {
-  directoryNameResolver = resolver;
-}
+// The Directory-name resolution lives in directoryNames.ts; re-exported for
+// the hosts that register their resolver here.
+export { type DirectoryNameResolver, setDirectoryNameResolver } from './directoryNames.js';
 
 /**
  * Scan the provider's teammate transcripts for a given lead session.
@@ -1052,9 +1045,7 @@ export function adoptExternalSessionFromHook(
 
     knownJsonlFiles.add(transcriptPath);
     const projectDir = path.dirname(transcriptPath);
-    const directoryName =
-      directoryNameResolver?.({ cwd, projectDir }) ??
-      directoryNameFromProjectDir(path.basename(projectDir));
+    const directoryName = resolveDirectoryName({ cwd, projectDir });
 
     adoptExternalSession(
       transcriptPath,
@@ -1083,8 +1074,7 @@ export function adoptExternalSessionFromHook(
   } else {
     // Hooks-only provider (OpenCode, Copilot): no transcript file, all state from hooks
     const id = nextAgentIdRef.current++;
-    const directoryName =
-      directoryNameResolver?.({ cwd }) ?? (cwd ? path.basename(cwd) : undefined);
+    const directoryName = resolveDirectoryName({ cwd });
     const agent = createAgentState({
       id,
       sessionId,
@@ -1409,12 +1399,6 @@ export function scanExternalDir(
   }
 }
 
-/** Derive a readable Directory name from the Claude project dir hash. */
-function directoryNameFromProjectDir(dirName: string): string {
-  const parts = dirName.replace(/^-+/, '').split('-');
-  return parts[parts.length - 1] || dirName;
-}
-
 /** Scan every session root the active provider exposes for active sessions
  *  (global discovery — powers the "Watch All Sessions" toggle). */
 function scanGlobalProjectDirs(
@@ -1477,9 +1461,7 @@ function scanGlobalProjectDirs(
         continue;
       }
 
-      const directoryName =
-        directoryNameResolver?.({ projectDir: dirPath }) ??
-        directoryNameFromProjectDir(path.basename(dirPath));
+      const directoryName = resolveDirectoryName({ projectDir: dirPath });
       knownJsonlFiles.add(file);
       console.log(
         `[Pixel Agents] Watcher: detected global session ${path.basename(file)} (${directoryName})`,
