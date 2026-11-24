@@ -83,6 +83,87 @@
 .archi-need .archi-act {
   color: #4a3000;
 }
+.archi-act:empty {
+  display: none;
+}
+
+/* Thought cloud over a working agent: an emoji and what it's doing */
+.archi-cloud {
+  transform: translate(-50%, -100%) translateY(-40px);
+  animation: archi-cloud-drift 3.2s ease-in-out infinite;
+}
+.archi-cloud-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 230px;
+  padding: 6px 12px 6px 9px;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--archi-text);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 6px 18px rgba(19, 35, 63, 0.16),
+    inset 0 -2px 0 rgba(19, 35, 63, 0.06);
+}
+.archi-cloud-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+.archi-cloud-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.archi-cloud-text:empty {
+  display: none;
+}
+/* The thought's trail: two puffs down to the head */
+.archi-cloud-dot {
+  position: absolute;
+  left: calc(50% - 10px);
+  bottom: -7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 2px 6px rgba(19, 35, 63, 0.14);
+}
+.archi-cloud-dot-sm {
+  left: calc(50% - 15px);
+  bottom: -14px;
+  width: 5px;
+  height: 5px;
+}
+.archi-cloud-rest .archi-cloud-body {
+  padding: 5px 7px;
+}
+.archi-cloud-need .archi-cloud-body {
+  background: #fff3d6;
+  color: #4a3000;
+}
+.archi-cloud-pop .archi-cloud-emoji {
+  animation: archi-cloud-pop 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes archi-cloud-drift {
+  50% {
+    transform: translate(-50%, -100%) translateY(-44px);
+  }
+}
+@keyframes archi-cloud-pop {
+  0% {
+    transform: scale(0.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .archi-cloud,
+  .archi-cloud-pop .archi-cloud-emoji {
+    animation: none;
+  }
+}
 .archi-place {
   pointer-events: auto;
   cursor: pointer;
@@ -526,6 +607,31 @@
 }
 
 /* An island's style: asked when it's new, changed from the pencil */
+.archi-style-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 11px;
+  border: 1px solid var(--archi-line);
+  border-radius: 999px;
+  color: var(--archi-text);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.archi-style-pill b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.archi-style-pill span {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0e86d4;
+  white-space: nowrap;
+}
 .archi-style-card {
   width: 100%;
   padding: 11px 12px 12px;

@@ -1,11 +1,14 @@
 // The archipelago view's engine: renderer, camera, world, agents, labels.
 // The React side hands it `getCrew()` (read every frame) and `onSelect(id)`.
+import { thoughtOf } from './activity.js';
 import { makeBody, STATUS, Walker } from './agents.js';
 import { buildIslands, DAY_PAL } from './islands.js';
 import * as THREE from './three.js';
 import { World } from './world.js';
 
 const FALLBACK_PROJECT = 'office';
+/** Past this camera distance clouds show their emoji only, so the view doesn't clutter. */
+const CLOUD_TEXT_MAX_DISTANCE = 70;
 const MOVE_KEYS = new Set([
   'w',
   'a',
@@ -338,6 +341,7 @@ export class ArchipelagoScene {
         m.walker.goTo([], s.pose, s.face, s.seatY ?? 0);
         m.placed = `${p}|${slot}|${a.state}`;
         m.label ??= this.makeAgentLabel();
+        m.cloud ??= this.makeCloud();
       }
       m.walker.agent = m.record;
       const key = `${p}|${slot}|${a.state}`;
@@ -351,6 +355,7 @@ export class ArchipelagoScene {
       if (seen.has(id)) continue;
       if (m.walker) this.world.root.remove(m.walker.body.root);
       m.label?.remove();
+      m.cloud?.remove();
       this.members.delete(id);
     }
     // Follow the office's selected agent.
@@ -413,6 +418,36 @@ export class ArchipelagoScene {
     return el;
   }
 
+  /** The thought cloud over an agent's tag: an emoji and what it's doing. */
+  makeCloud() {
+    const el = document.createElement('div');
+    el.className = 'archi-label archi-cloud';
+    el.innerHTML =
+      '<span class="archi-cloud-body"><span class="archi-cloud-emoji"></span><span class="archi-cloud-text"></span></span><i class="archi-cloud-dot"></i><i class="archi-cloud-dot archi-cloud-dot-sm"></i>';
+    this.labelLayer.appendChild(el);
+    return el;
+  }
+
+  /** Fills a cloud; a new emoji pops in. Far out, only the emoji shows. */
+  fillCloud(m, far) {
+    const th = thoughtOf(m.record);
+    const el = m.cloud;
+    const key = `${th.emoji}|${th.text}|${far}`;
+    if (el.dataset.key === key) return th;
+    const emoji = el.querySelector('.archi-cloud-emoji');
+    if (emoji.textContent !== th.emoji) {
+      emoji.textContent = th.emoji;
+      el.classList.remove('archi-cloud-pop');
+      void el.offsetWidth; // restart the pop
+      el.classList.add('archi-cloud-pop');
+    }
+    el.querySelector('.archi-cloud-text').textContent = far ? '' : th.text;
+    el.classList.toggle('archi-cloud-need', m.record.state === 'need');
+    el.classList.toggle('archi-cloud-rest', !th.text || far);
+    el.dataset.key = key;
+    return th;
+  }
+
   placeLabel(el, world) {
     const v = world.clone().project(this.camera);
     const vis = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
@@ -451,16 +486,22 @@ export class ArchipelagoScene {
     this.composer.render();
     for (const L of this.islandLabels) this.placeLabel(L.el, L.pos);
     const head = new THREE.Vector3();
+    const far = away > CLOUD_TEXT_MAX_DISTANCE;
     for (const m of this.members.values()) {
       if (!m.walker || !m.label) continue;
       const a = m.record;
+      const th = m.cloud ? this.fillCloud(m, far) : null;
       m.label.classList.toggle('archi-need', a.state === 'need');
       m.label.classList.toggle('archi-unread', !!a.unread);
       m.label.querySelector('.archi-face').style.background = a.color;
       m.label.querySelector('.archi-name').textContent = a.name;
-      m.label.querySelector('.archi-act').textContent = a.state === 'idle' ? 'zzz' : a.activity;
+      // The cloud says what it's doing; the tag keeps only what the cloud doesn't.
+      m.label.querySelector('.archi-act').textContent =
+        a.state === 'idle' || (th?.text && !far) ? '' : a.activity;
       m.label.style.borderLeftColor = a.state === 'need' ? 'transparent' : STATUS[a.state].color;
-      this.placeLabel(m.label, m.walker.head(head));
+      m.walker.head(head);
+      this.placeLabel(m.label, head);
+      if (m.cloud) this.placeLabel(m.cloud, head);
     }
   }
 

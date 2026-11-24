@@ -124,6 +124,8 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
   const [islands, setIslands] = useState<string[]>([]);
   // The island whose style is being changed (pencil), if any.
   const [restyling, setRestyling] = useState<string | null>(null);
+  // A new island's style card stays folded into a pill until it's opened.
+  const [styleOpen, setStyleOpen] = useState(false);
   const [, setThemesSeen] = useState(0);
   useEffect(() => islandThemes.subscribe(() => setThemesSeen((n) => n + 1)), []);
   const sceneRef = useRef<ArchipelagoScene | null>(null);
@@ -181,6 +183,11 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
   const choose = (name: string, theme: IslandThemeId) => {
     islandThemes.set(name, theme);
     setRestyling(null);
+    setStyleOpen(false);
+  };
+  const closeStyle = () => {
+    setRestyling(null);
+    setStyleOpen(false);
   };
 
   const count = (s: ArchipelagoAgent['state']) => crew.filter((a) => a.state === s).length;
@@ -243,7 +250,10 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
                   type="button"
                   className="archi-nav-style"
                   title={`Change ${name}'s style`}
-                  onClick={() => setRestyling(restyling === name ? null : name)}
+                  onClick={() => {
+                    setStyleOpen(false);
+                    setRestyling(restyling === name ? null : name);
+                  }}
                 >
                   <LineIcon name="pencil" size={11} />
                 </button>
@@ -264,20 +274,30 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
             )}
           </div>
         )}
-        {asking !== null && (
+        {asking !== null && !restyling && !styleOpen && (
+          <button
+            type="button"
+            className="archi-glass archi-style-pill"
+            title="Choose this island's style (it draws as a beach until then)"
+            onClick={() => setStyleOpen(true)}
+          >
+            <LineIcon name="pencil" size={11} />
+            Nueva isla <b>{asking}</b>
+            <span>Elegir estilo</span>
+          </button>
+        )}
+        {asking !== null && (restyling || styleOpen) && (
           <div className="archi-glass archi-style-card">
             <div className="archi-style-title">
               {restyling ? 'Estilo de' : 'Nueva isla'} <b>{asking}</b>
-              {restyling && (
-                <button
-                  type="button"
-                  className="archi-style-x"
-                  title="Close"
-                  onClick={() => setRestyling(null)}
-                >
-                  <LineIcon name="close" size={12} />
-                </button>
-              )}
+              <button
+                type="button"
+                className="archi-style-x"
+                title={restyling ? 'Close' : 'Fold (choose later)'}
+                onClick={closeStyle}
+              >
+                <LineIcon name="close" size={12} />
+              </button>
             </div>
             <div className="archi-style-grid">
               {ISLAND_THEMES.map((t) => {
