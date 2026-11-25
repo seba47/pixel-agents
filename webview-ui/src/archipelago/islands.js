@@ -260,6 +260,10 @@ const ROOFS = [
 const HAMMOCKS = ['#ff9a6a', '#6ac8ff', '#ffd36b', '#c58bff'];
 /** Desks per island; a fifth agent shares a desk (offset). */
 const SLOTS = 4;
+/** Ground at least this high is land a robot can sit on (the sea is at 0). */
+const SHORE_MIN_Y = 0.2;
+/** How far off the coast a paddle boarder keeps. */
+const PADDLE_OFFSHORE = 2.4;
 /** Island radius, and how far apart the layout spreads them. */
 const ISLAND_R = 11;
 const SPREAD = 1.35;
@@ -493,7 +497,8 @@ export function buildIslands(world, projects, crewOf, themeOf = () => 'beach') {
         crewOf(key).some((a) => a.state === 'need'),
       ),
     );
-    const dk = addDock(world, isl, 1.25, 5);
+    const DOCK_ANG = 1.25;
+    const dk = addDock(world, isl, DOCK_ANG, 5);
     const hm = hammock(HAMMOCKS[idx % HAMMOCKS.length]);
     const [ax, az] = at(isl, 3.6, 0.52);
     put(world, hm.group, ax, az, 0.4);
@@ -532,7 +537,42 @@ export function buildIslands(world, projects, crewOf, themeOf = () => 'beach') {
       );
       b.rotation.y = -an;
     });
-    spotTable.set(key, (slot, state) => {
+    // Free time by the water (not over a sea of clouds): fishing from the
+    // shore on one side of the dock, paddle boarding off the other.
+    const wet = !world.pal?.cloudLow;
+    // The coast along a ray from the centre: the outermost point still on
+    // land (an island's outline wanders well inside its nominal radius).
+    const shoreAt = (ang) => {
+      for (let f = 1.3; f > 0.2; f -= 0.01) {
+        const p = at(isl, ang, f);
+        if (world.groundY(p[0], p[1]) >= SHORE_MIN_Y) return { f, p };
+      }
+      return { f: 0.5, p: at(isl, ang, 0.5) };
+    };
+    const fishSpot = (k) => {
+      const ang = DOCK_ANG - 0.75 - k * 0.4;
+      const [x, z] = shoreAt(ang).p;
+      return { x, z, face: Math.atan2(Math.cos(ang), Math.sin(ang)), pose: 'fish', isl: key };
+    };
+    const paddleSpot = (k) => {
+      const base = DOCK_ANG + 1.7 + k * 0.6;
+      const sweep = 0.45;
+      // Clear of the coast all along the arc.
+      let far = 0;
+      for (let a = base - sweep; a <= base + sweep; a += 0.05)
+        far = Math.max(far, shoreAt(a).f * isl.r);
+      const R = far + PADDLE_OFFSHORE;
+      return {
+        x: isl.x + Math.cos(base) * R,
+        z: isl.z + Math.sin(base) * R,
+        via: shoreAt(base).p,
+        face: Math.atan2(-Math.sin(base), Math.cos(base)),
+        pose: 'paddle',
+        orbit: { cx: isl.x, cz: isl.z, R, base, sweep },
+        isl: key,
+      };
+    };
+    spotTable.set(key, (slot, state, agent) => {
       const k = slot % SLOTS;
       const extra = Math.floor(slot / SLOTS) * 0.6;
       switch (state) {
@@ -547,6 +587,12 @@ export function buildIslands(world, projects, crewOf, themeOf = () => 'beach') {
             z: dk.z - Math.cos(dk.face) * slot * 0.9,
           };
         default:
+          // A main agent with nothing to do goes fishing or paddling, by id
+          // so it keeps its pastime; Sub-agents wait by the hammock.
+          if (wet && agent && agent.parentId === null) {
+            const n = Math.abs(agent.id);
+            return n % 2 === 0 ? fishSpot(k) : paddleSpot(k);
+          }
           return slot === 0
             ? { x: ax, z: az, face: 0.4 + Math.PI / 2, pose: 'lie', seatY: 0.45, isl: key }
             : { x: ax + 1.2 + slot * 0.8, z: az + 1.6, face: 0.3, pose: 'idle', isl: key };
@@ -565,7 +611,7 @@ export function buildIslands(world, projects, crewOf, themeOf = () => 'beach') {
   let span = 0;
   for (const i of islands) span = Math.max(span, Math.hypot(i.x - cx, i.z - cz) + i.r);
   return {
-    spotFor: (project, slot, state) => spotTable.get(project)(slot, state),
+    spotFor: (project, slot, state, agent) => spotTable.get(project)(slot, state, agent),
     labels: islands.map((v) => ({ text: v.key, pos: V(v.x, v.h + 4.8, v.z - v.r * 0.4) })),
     islands: islands.map((v) => ({ name: v.key, center: V(v.x, v.h, v.z), r: v.r })),
     center: V(cx, 0, cz),

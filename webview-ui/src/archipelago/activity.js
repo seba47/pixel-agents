@@ -31,13 +31,15 @@ const TOOLS = [
 
 /**
  * The cloud for an agent: `{ emoji, text }`, text empty for an emoji-only
- * cloud (resting, done). Null shows no cloud.
+ * cloud (resting, done). `pose`: the body's, so a resting agent's cloud says
+ * how it rests (fishing, paddling). Null shows no cloud.
  */
-export function thoughtOf(agent) {
+export function thoughtOf(agent, pose) {
   const act = agent.activity ?? '';
   if (agent.state === 'need') return { emoji: '✋', text: act };
   if (agent.state === 'done') return { emoji: agent.unread ? '🎉' : '✅', text: '' };
-  if (agent.state === 'idle') return { emoji: '💤', text: '' };
+  if (agent.state === 'idle')
+    return { emoji: pose === 'fish' ? '🎣' : pose === 'paddle' ? '🏄' : '💤', text: '' };
   if (act.startsWith('Running')) {
     const cmd = act.replace(/^Running:?\s*/, '');
     const hit = COMMANDS.find(([re]) => re.test(cmd));

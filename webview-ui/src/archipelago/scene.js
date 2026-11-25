@@ -336,9 +336,9 @@ export class ArchipelagoScene {
         m.walker = new Walker(m.record, makeBody(a.color), this.world);
         if (a.parentId !== null) m.walker.body.root.scale.multiplyScalar(0.78);
         this.world.root.add(m.walker.body.root);
-        const s = this.built.spotFor(p, slot, a.state);
+        const s = this.built.spotFor(p, slot, a.state, a);
         m.walker.place(s.x, s.z, s.face);
-        m.walker.goTo([], s.pose, s.face, s.seatY ?? 0);
+        m.walker.goTo([], s.pose, s.face, s.seatY ?? 0, s.orbit);
         m.placed = `${p}|${slot}|${a.state}`;
         m.label ??= this.makeAgentLabel();
         m.cloud ??= this.makeCloud();
@@ -347,8 +347,10 @@ export class ArchipelagoScene {
       const key = `${p}|${slot}|${a.state}`;
       if (key !== m.placed || prev.color !== a.color) {
         m.placed = key;
-        const s = this.built.spotFor(p, slot, a.state);
-        m.walker.goTo([[s.x, s.z]], s.pose, s.face, s.seatY ?? 0);
+        const s = this.built.spotFor(p, slot, a.state, a);
+        // Into the water from the shore, not across the island's shelf.
+        const path = s.via ? [s.via, [s.x, s.z]] : [[s.x, s.z]];
+        m.walker.goTo(path, s.pose, s.face, s.seatY ?? 0, s.orbit);
       }
     }
     for (const [id, m] of this.members) {
@@ -430,7 +432,7 @@ export class ArchipelagoScene {
 
   /** Fills a cloud; a new emoji pops in. Far out, only the emoji shows. */
   fillCloud(m, far) {
-    const th = thoughtOf(m.record);
+    const th = thoughtOf(m.record, m.walker?.pose);
     const el = m.cloud;
     const key = `${th.emoji}|${th.text}|${far}`;
     if (el.dataset.key === key) return th;
