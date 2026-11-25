@@ -726,3 +726,37 @@
 .archi-ext-off:hover {
   background: rgba(242, 161, 15, 0.3);
 }
+
+/* Renaming an agent from its dock card. */
+.archi-rename-btn {
+  margin-left: 4px;
+  border: 0;
+  padding: 1px 3px;
+  background: none;
+  color: var(--archi-muted);
+  cursor: pointer;
+  opacity: 0;
+  vertical-align: 0;
+}
+.archi-crew:hover .archi-rename-btn,
+.archi-rename-btn:focus-visible {
+  opacity: 0.7;
+}
+.archi-rename-btn:hover {
+  opacity: 1;
+}
+.archi-rename {
+  width: 140px;
+  font: inherit;
+  padding: 1px 5px;
+  border: 1px solid #0e86d4;
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  outline: none;
+}
+@media (hover: none) {
+  .archi-rename-btn {
+    opacity: 0.6;
+  }
+}

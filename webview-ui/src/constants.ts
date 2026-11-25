@@ -962,6 +962,10 @@ export const HOLO_ORB_SATELLITE_ORBIT = 5;
 /** localStorage key for the archipelago view (per browser). */
 /** Each island's chosen style (Archipelago view), by Directory name, per browser. */
 export const ARCHIPELAGO_ISLAND_THEMES_KEY = 'pixel-agents.archipelago.islandThemes';
+/** The archipelago's custom agent names, by session id (localStorage). */
+export const ARCHIPELAGO_AGENT_NAMES_KEY = 'pixel-agents.archipelago.agentNames';
+/** The longest custom agent name. */
+export const ARCHIPELAGO_AGENT_NAME_MAX = 32;
 export const ARCHIPELAGO_STORAGE_KEY = 'pixel-agents.archipelago';
 /** Agent body colours in the archipelago, by palette index. */
 export const ARCHIPELAGO_AGENT_COLORS = [

@@ -3,12 +3,14 @@ import './archipelago.css';
 import { useEffect, useRef, useState } from 'react';
 
 import {
+  ARCHIPELAGO_AGENT_NAME_MAX,
   ARCHIPELAGO_CLEAN_MS,
   ARCHIPELAGO_HUD_INTERVAL_MS,
   ARCHIPELAGO_QUIET_MS,
   ARCHIPELAGO_TITLES_INTERVAL_MS,
 } from '../constants.js';
 import { transport } from '../transport/index.js';
+import { agentNames } from './agentNames.js';
 import { crewFrom, type CrewSource } from './crew.js';
 import { ISLAND_THEMES, type IslandThemeId, islandThemes, suggestTheme } from './islandThemes.js';
 import { LineIcon } from './LineIcon.js';
@@ -68,6 +70,8 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
   latest.current = props;
   // Running agents' conversation titles, from the same list the sidebar shows.
   const titles = useRef<Map<number, string>>(new Map());
+  // Running agents' session ids (same list): custom names are kept by session.
+  const sessions = useRef<Map<number, string>>(new Map());
   // When each agent last changed (state or what it's doing). An agent that
   // claims to be working with nothing changing for a while has most likely
   // gone (its session closed without saying so): it shows as without activity.
@@ -79,7 +83,17 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
   const shownCrew = (): Shown[] => {
     const now = Date.now();
     const p = latest.current;
-    const list = crewFrom({ ...p, titles: titles.current });
+    const named = crewFrom({ ...p, titles: titles.current }).map((a) =>
+      a.parentId === null
+        ? { ...a, name: agentNames.get(a.id, sessions.current.get(a.id)) ?? a.name }
+        : a,
+    );
+    // A Sub-agent's "↳ parent" follows its parent's custom name.
+    const list = named.map((a) =>
+      a.parentId === null
+        ? a
+        : { ...a, parentName: named.find((m) => m.id === a.parentId)?.name ?? a.parentName },
+    );
     return list.map((a) => {
       const sig = `${a.state}|${a.activity}`;
       const seen = changed.current.get(a.id);
@@ -106,10 +120,16 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
     const off = transport.onMessage((msg) => {
       if (msg.type !== 'conversationsLoaded') return;
       const next = new Map<number, string>();
+      const ids = new Map<number, string>();
       for (const d of msg.directories)
-        for (const c of d.conversations)
-          if (c.agentId !== undefined && c.title) next.set(c.agentId, c.title);
+        for (const c of d.conversations) {
+          if (c.agentId === undefined) continue;
+          if (c.title) next.set(c.agentId, c.title);
+          ids.set(c.agentId, c.sessionId);
+          agentNames.adopt(c.agentId, c.sessionId);
+        }
       titles.current = next;
+      sessions.current = ids;
     });
     const ask = () => transport.send({ type: 'requestConversations' });
     ask();
@@ -121,6 +141,13 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
   }, []);
   const [crew, setCrew] = useState<Shown[]>([]);
   const [confirmClose, setConfirmClose] = useState<number | null>(null);
+  // The agent being renamed in the dock, and what's typed so far.
+  const [renaming, setRenaming] = useState<{ id: number; text: string } | null>(null);
+  const saveName = () => {
+    if (!renaming) return;
+    agentNames.set(renaming.id, sessions.current.get(renaming.id), renaming.text);
+    setRenaming(null);
+  };
   const [islands, setIslands] = useState<string[]>([]);
   // The island whose style is being changed (pencil), if any.
   const [restyling, setRestyling] = useState<string | null>(null);
@@ -128,6 +155,8 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
   const [styleOpen, setStyleOpen] = useState(false);
   const [, setThemesSeen] = useState(0);
   useEffect(() => islandThemes.subscribe(() => setThemesSeen((n) => n + 1)), []);
+  // A rename shows at once, not on the HUD's next tick.
+  useEffect(() => agentNames.subscribe(() => setCrew(shownCrew())), []);
   const sceneRef = useRef<ArchipelagoScene | null>(null);
   const lastZoom = useRef(props.zoom);
 
@@ -385,7 +414,38 @@ export function ArchipelagoView(props: ArchipelagoViewProps) {
                 </span>
                 <span className="archi-id">
                   <span className="archi-crew-name">
-                    {a.name}
+                    {renaming?.id === a.id ? (
+                      <input
+                        className="archi-rename"
+                        autoFocus
+                        value={renaming.text}
+                        maxLength={ARCHIPELAGO_AGENT_NAME_MAX}
+                        placeholder="Nombre (vacío = el de siempre)"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setRenaming({ id: a.id, text: e.target.value })}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          if (e.key === 'Enter') saveName();
+                          else if (e.key === 'Escape') setRenaming(null);
+                        }}
+                        onBlur={saveName}
+                      />
+                    ) : (
+                      a.name
+                    )}
+                    {a.parentId === null && renaming?.id !== a.id && (
+                      <button
+                        type="button"
+                        className="archi-rename-btn"
+                        title="Rename this agent (in this browser)"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenaming({ id: a.id, text: a.name });
+                        }}
+                      >
+                        <LineIcon name="pencil" size={10} />
+                      </button>
+                    )}
                     {a.unread && <span className="archi-new">Nuevo</span>}
                     {external(a) &&
                       (inactive(a) ? (
